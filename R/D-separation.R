@@ -471,27 +471,112 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
 
 ## Generics ----
 
-#' @export
-print.conditionalIndependences<- function(x, ...){
+as.data.frame.conditionalIndependences<- function(x, ...){
   condIndp<- sapply(x$conditionalIndependences, function(y){
     paste("(", paste(y$dSep, collapse=", "), "){", paste(y$causal, collapse=", "), "}", sep="")
   })
-  model=sapply(x$model, function(y){
+  model<- sapply(x$model, function(y){
     y$formula
   })
+  indepVar<- sapply(x$model, function(y){
+    y$independentVar
+  })
 
-  print(data.frame(condIndp=condIndp, model=as.character(model)), ...)
+  pVal<- lapply(x$model, function(y){
+    y$p.value
+  })
+  pVal<- unlist(pVal)
+  if (is.null(pVal)) pVal<- NA
 
+  res<- data.frame(condIndp=condIndp, formula=as.character(model), indepVar=as.character(indepVar), p.value=pVal)
+
+  return(res)
+}
+
+#' @export
+print.conditionalIndependences<- function(x, ...){
+  out<- dSep:::as.data.frame.conditionalIndependences(x)
+  names(out)<- gsub("condIndp", "condIndp*", names(out))
+  if (all(is.na(out$p.value))){
+    out<- out[,!names(out) %in% "p.value"]
+  }
+
+  print(out, ...)
+  cat("\t* (d-separated variables){causal variables}\n")
+
+  invisible(x)
+}
+
+summary.list.conditionalIndependences<- function(x, ....){
+  condInd<- lapply(x, function(y){
+    as.data.frame.conditionalIndependences(y)
+  })
+  condInd<- unique(do.call(rbind, condInd))
+  rownames(condInd)<- NULL
+  condInd
+}
+
+#' @rdname dSep
+#' @export
+summary.dSep<- function(x, ....){
+  conditionalIndependences<- summary.list.conditionalIndependences(x$conditionalIndependences)
+  pathCoefficients<- summary.pathCoef(x$pathCoefficients)
+
+  out<- list(res=x$res, FUN=x$FUN, conditionalIndependences=conditionalIndependences, nobs=nobs)
+    if (!is.null(x$pathCoefficients)){
+    out<- c(out, list(pathCoefficients=pathCoefficients))
+  }
+
+  class(out)<- c("summary.dSep")
+  out
+}
+
+#' @export
+print.summary.dSep<- function(x, ...){
+  print(x$res, digits=3, ...)
+
+  cat("\nConditional independence statements:\n")
+  names(x$conditionalIndependences)<- gsub("condIndp", "condIndp*", names(x$conditionalIndependences))
+  print(x$conditionalIndependences, digits=3, ...)
+  cat("\t* (d-separated variables){causal variables}\n")
+
+  if (!is.null(x$pathCoefficients)){
+    cat("\nPath coefficients:\n")
+    print(x$pathCoefficients, ...)
+  }
   invisible(x)
 }
 
 #' @export
 print.dSep<- function(x, ...){
   print(x$res, digits=3, ...)
+
+  cat("\nConditional independence statements:\n")
+  condInd<- lapply(x$conditionalIndependences, function(y){
+    tmp<- as.data.frame.conditionalIndependences(y)
+    names(tmp)<- gsub("condIndp", "condIndp*", names(tmp))
+    tmp
+  })
+  print(condInd, ...)
+  cat("\t* (d-separated variables){causal variables}\n")
+
   if (!is.null(x$pathCoefficients)){
     cat("\nPath coefficients:\n")
-    print(x$pathCoefficients)
+    print(x$pathCoefficients, ...)
   }
+}
+
+#' @rdname pathCoef
+#' @export
+summary.pathCoef<- function(x, ....){
+  out<- list(res=x$res, FUN=x$FUN, alpha=x$alpha)
+  class(out)<- "summary.pathCoef"
+  out
+}
+
+#' @export
+print.summary.pathCoef<- function(x, ...){
+  print(x$res, digits=3, ...)
 }
 
 #' @export
@@ -499,6 +584,7 @@ print.pathCoef<- function(x, ...){
   print(x$res, digits=3, ...)
 }
 
+## Plots ----
 
 #' @rdname dSep
 #' @import graph Rgraphviz

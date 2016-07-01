@@ -79,6 +79,15 @@ test_that("print works", {
   lapply(D, function(x) return(x$pathCoefficients))
 })
 
+test_that("summary works", {
+  # lapply(D, function(x) summary(x))
+  # lapply(D, function(x) summary(x$pathCoefficients))
+  # lapply(D, function(x) dSep:::summary.list.conditionalIndependences(x$conditionalIndependences))
+  lapply(D, function(x) expect_is(summary(x), "summary.dSep"))
+  lapply(D[sapply(D, function(x) !is.null(x$pathCoefficients))], function(x) expect_is(summary(x$pathCoefficients), "summary.pathCoef"))
+  lapply(D, function(x) expect_is(dSep:::summary.list.conditionalIndependences(x$conditionalIndependences), "data.frame"))
+})
+
 test_that("plot works", {
   skip_if_not_installed("Rgraphviz")
 
