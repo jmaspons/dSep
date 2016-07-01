@@ -151,7 +151,7 @@ condIndep<- function(x, orderResponse){
     pred<- paste(sort(as.character(c(cI$dSep[-selResponse], cI$causal))), collapse=" + ")
     mod<- as.formula(paste(cI$dSep[selResponse], "~", pred), env=.GlobalEnv)
     indTest<- cI$dSep[,-selResponse]
-    return (list(formula=mod, independenceTest=indTest))
+    return (list(formula=mod, independentVar=indTest))
   })
 
   res<- list(conditionalIndependences=conditionalIndependences, model=model)
@@ -287,10 +287,18 @@ dSep.list<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE,
     sapply(y$model, function(z){ # Conditional independences loop
       sel<- which(as.character(formulas) %in% as.character(list(z$formula)))
       if (all(is.na(pVal))) return(NA)
-      pVal[[sel]][z$independenceTest]
+      pVal[[sel]][z$independentVar]
     })
   })
 
+  for (i in seq_along(condInd)){ # Graph loop
+    for (j in seq_along(condInd[[i]]$model)){ # Conditional independences loop
+      condInd[[i]]$model[[j]]$p.value<- pValCondInd[[i]][j]
+    }
+  }
+
+
+  ## Stats
   Cx<- lapply(pValCondInd, C)
   Cx.pval<- lapply(Cx, function(p){
     if (all(is.na(p))) return(NA)
@@ -430,8 +438,7 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
 
   varsM$coefficients<- unlist(coefM)
   varsM$p.value<- unlist(pValM)
-  varsM$signif<- varsM$p.value < alpha
-  varsM$label<- paste0(round(varsM$coefficients, 2), ifelse(varsM$signif, " *", ""))
+  varsM$label<- paste0(round(varsM$coefficients, 2), ifelse(varsM$p.value < alpha, " *", ""))
   varsM$label<- gsub("NANA", "NA", varsM$label)
 
   ## Match models with every graph edge and set edgeData
@@ -441,17 +448,15 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
     colnames(tmpVars)<- c("predictor", "response")
     tmpVars<- merge(varsM, tmpVars)
 
-    graph::edgeDataDefaults(x[[i]], "coefficient")<- NA_real_
+    graph::edgeDataDefaults(x[[i]], "coefficients")<- NA_real_
     graph::edgeDataDefaults(x[[i]], "p.value")<- NA_real_
-    graph::edgeDataDefaults(x[[i]], "signif")<- FALSE
     graph::edgeDataDefaults(x[[i]], "label")<- ""
 
     for (j in 1:nrow(tmpVars)){ # Edge loop
       to<- tmpVars$response[j]
       from<- tmpVars$predictor[j]
-      graph::edgeData(x[[i]], from=from, to=to, attr="coefficient")<- tmpVars$coefficient[j]
+      graph::edgeData(x[[i]], from=from, to=to, attr="coefficients")<- tmpVars$coefficients[j]
       graph::edgeData(x[[i]], from=from, to=to, attr="p.value")<- tmpVars$p.value[j]
-      graph::edgeData(x[[i]], from=from, to=to, attr="signif")<- tmpVars$signif[j]
       graph::edgeData(x[[i]], from=from, to=to, attr="label")<- tmpVars$label[j]
     }
     # edgeData(x[[i]]); edgeData(x[[i]], attr="label")
@@ -529,7 +534,7 @@ plot.dSep<- function(x, y, ...){
 #' @rdname pathCoef
 #' @import graph Rgraphviz
 #' @export
-plot.pathCoef<- function(x, y, lty=c(signif=1, nonSignif=2), dSep, ...){
+plot.pathCoef<- function(x, y, alpha=0.05, lty=c(signif=1, nonSignif=2), legend=TRUE, dSep, ...){
   if (!require(Rgraphviz)){
     stop("You need to install Rgraphviz:\n",
          "\tsource('https://bioconductor.org/biocLite.R'\n",
@@ -544,33 +549,39 @@ plot.pathCoef<- function(x, y, lty=c(signif=1, nonSignif=2), dSep, ...){
 
   par(mfrow=c(nRows, nCols))
   eAttrs<- lapply(1:nG, function(i, dSep){
-    eAttrs<- list()
+    ## Edge type
+    ePvalue<- as.numeric(unlist(graph::edgeWeights(g[[i]], attr="p.value", type.checker=is.numeric)))
+    ePvalue<- ePvalue[setdiff(seq(along=ePvalue), Rgraphviz::removedEdges(g[[i]]))]
+    eSignif<- ePvalue < alpha
+    eLty<- eSignif
+    eLty[eSignif]<- lty[1]
+    eLty[!eSignif | is.na(eSignif)]<- lty[2]
+
     ## Labels
-    ew<- as.character(unlist(graph::edgeWeights(g[[i]], attr="label", type.checker=is.character)))
-    ew<- ew[setdiff(seq(along=ew), Rgraphviz::removedEdges(g[[i]]))]
-    eAttrs$label<- ew
+    eCoef<- as.numeric(unlist(graph::edgeWeights(g[[i]], attr="coefficients", type.checker=is.numeric)))
+    eCoef<- eCoef[setdiff(seq(along=eCoef), Rgraphviz::removedEdges(g[[i]]))]
+    eLab<- paste0(round(eCoef, 2), ifelse(eSignif, " *", ""))
+    eLab<- gsub("NANA", "NA", eLab)
 
     ## Edge width
+    # ?? eAttrs$penwidth
     # ((to_max - to_min) * (self - from_min)) / (from_max - from_min) + to_min
     ## TODDO: scale in the range [1-10]??
-    # ew<- unlist(graph::edgeWeights(g[[i]], attr="coefficient", type.checker=is.numeric))
-    # ew<- ew[setdiff(seq(along=ew), Rgraphviz::removedEdges(g[[i]]))]
-    # eAttrs$lwd<- as.numeric(ew)
+    # eLwd<- unlist(graph::edgeWeights(g[[i]], attr="coefficients", type.checker=is.numeric))
+    # eLwd<- eLwd[setdiff(seq(along=eLwd), Rgraphviz::removedEdges(g[[i]]))]
 
-    ## Edge type
-    ew<- as.logical(unlist(graph::edgeWeights(g[[i]], attr="signif", type.checker=is.logical)))
-    ew<- ew[setdiff(seq(along=ew), Rgraphviz::removedEdges(g[[i]]))]
-    ew[ew]<- lty[1]
-    ew[!ew | is.na(ew)]<- lty[2]
-    eAttrs$lty<- ew
+    names(eLab)<- names(eLty)<- graph::edgeNames(g[[i]])
+    # names(eLwd)<- graph::edgeNames(g[[i]])
 
-    names(eAttrs$label)<- names(eAttrs$lty)<- graph::edgeNames(g[[i]])
-    # names(eAttrs$lwd)<- names(eAttrs$label)
-    # ?? eAttrs$penwidth
+    eAttrs<- list(label=eLab, lty=eLty)
+    # eAttrs<- list(label=eLab, lty=eLty, lwd=eLwd)
+
+
     if (missing(dSep)){
       plot(x=g[[i]], edgeAttrs=eAttrs, main=modelName[i], ...)
     }else{
-      plot(x=g[[i]], edgeAttrs=eAttrs, main=paste0(modelName[i], "\np-value=", round(dSep$res$p.value[i], 3), "\tCICc=", round(dSep$res$CICc[i], 3)), ...)
+      mName<- modelName[i]
+      plot(x=g[[i]], edgeAttrs=eAttrs, main=paste0(modelName[i], "\np-value=", round(dSep$res[mName, "p.value"], 3), "\tCICc=", round(dSep$res[mName,"CICc"], 3)), ...)
     }
     eAttrs
   }, dSep=dSep)
