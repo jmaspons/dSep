@@ -47,6 +47,7 @@ pValues.brmsfit<- function(x){
   return(colMeans(res))
 }
 
+#' @importFrom caper coef.pgls
 #' @export
 scoef<- function(object, ...) UseMethod("scoef")
 #' @export
@@ -55,6 +56,12 @@ scoef.default<- function(object, ...) coef(object, ...)
 scoef.MCMCglmm<- function(object, ...) MCMCglmm::posterior.mode(object$Sol)
 #' @export
 scoef.brmsfit<- function(object, ...) drop(t(brms::fixef(object, ...)))
+
+
+#' @importFrom caper nobs.pgls
+#' @export
+nobs.MCMCglmm<- function(object, ...) length(object$error.term)
+
 
 ## d-separation ----
 
@@ -87,21 +94,21 @@ CICc <- function(C, q, n){
 #' Conditional independences from a directed acyclid graphs (DAG)
 #'
 #' @examples
-#' dag2condInd(g<- dag(~BV:season:interCV + FS:season, forceCheck=TRUE))
+#' condIndep(g<- dag(~BV:season:interCV + FS:season, forceCheck=TRUE))
 #' @import graph
 #' @export
-dag2condInd<- function(g, orderResponse){
-  if (!inherits(g, "graph")) stop("g must be an object inheriting from graph class.")
-  if (require(gRbase) & inherits(g, "graphNEL")){
-    if (!gRbase::is.DAG(g)) stop("input must be a directed acyclical graph. See ?dag")
+condIndep<- function(x, orderResponse){
+  if (!inherits(x, "graph")) stop("x must be an object inheriting from graph class.")
+  if (require(gRbase) & inherits(x, "graphNEL")){
+    if (!gRbase::is.DAG(x)) stop("input must be a directed acyclical graph. See ?dag")
   }else{
     message("gRbase package not installed. No checks ensure that the graph is a directed acyclical graph (DAC).\n\tProceed under your own risk.")
   }
-  nod<- graph::nodes(g)
-  inEdg<- graph::inEdges(g)
-  outEdg<- graph::edges(g)
-  # edgeL(g)
-  # adj(g, 1)
+  nod<- graph::nodes(x)
+  inEdg<- graph::inEdges(x)
+  outEdg<- graph::edges(x)
+  # edgeL(x)
+  # adj(x, 1)
 
   # Find all pairs of non adjacent nodes. Conditionally independent (d-separated) pairs of nodes
   dSepPair<- lapply(nod, function(x){
@@ -172,7 +179,7 @@ dag2condInd<- function(g, orderResponse){
 #' @param ... parameters passed to FUN. Parameters must be named following the FUN arguments (e.g. data=data.frame()).
 #' @return a dSep object.
 #' @author Joan Maspons <\email{j.maspons@@creaf.uab.cat}>
-#' @references Gonzalez-Voyer, Alejandro, and Achaz Von Hardenberg. 2014. “An Introduction to Phylogenetic Path Analysis.” In Modern Phylogenetic Comparative Methods and Their Application in Evolutionary Biology, edited by László Zsolt Garamszegi, 29. Berlin, Heidelberg: Springer Berlin Heidelberg. doi:10.1007/978-3-662-43550-2.
+#' @references Gonzalez-Voyer, Alejandro, and Achaz Von Hardenberg. 2014. “An Introduction to Phylogenetic Path Analysis.” In Modern Phylogenetic Comparative Methods and Their Application in Evolutionary Biology, edited by László Zsolt Garamszegi, 29. Berlin, Heidelberg: Springer Berlin Heidelberg.
 #' \url{http://www.mpcm-evolution.org/practice/online-practical-material-chapter-8/chapter-8-2-step-step-guide-phylogenetic-path-analysis-using-d-sep-method-rhinograds-example}
 #' @examples
 #' ## Dummy data
@@ -227,11 +234,14 @@ dSep.pathCoef<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=T
 # FUN="lm"; formulaArg="formula"; nobs=nrow(d); cl=1; args0<- list(data=d)
 #' @rdname dSep
 #' @import graph
+#' @importFrom caper pgls
 #' @export
 dSep.list<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE, ...){
+  if (is.null(names(x))) names(x)<- seq_along(x)
   q<- sapply(x, function(y) graph::numNodes(y) + graph::numEdges(y))
-  g<- x
-  condInd<- lapply(x, dag2condInd, orderResponse=match.arg(orderResponse))
+  FUN<- match.fun(FUN)
+
+  condInd<- lapply(x, condIndep, orderResponse=match.arg(orderResponse))
   formulas<- unique(unlist(lapply(condInd, function(y) lapply(y$model, function(z) z$formula))))
 
   args0<- list(...)
@@ -241,8 +251,9 @@ dSep.list<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE,
     return(res)
   }, args=args0)
 
+
+  # Run models in parallel if cl parameter is present
   message(length(args), " models to run")
-  # Run models in parallel if cl parameter is preseent
   if (missing(cl)){
     m<- lapply(args, function(y){
       try(do.call(FUN, y))
@@ -266,6 +277,7 @@ dSep.list<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE,
   }
   # message("All models done!")
 
+  ## Match models with conditional inferences and store p-values
   pVal<- lapply(m, function(y){
     if (inherits(y, "try-error")) return(NA)
     pValues(y)
@@ -284,26 +296,42 @@ dSep.list<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE,
     if (all(is.na(p))) return(NA)
     1 - pchisq(p, 2 * length(p))
   })
+
+  ## Try to extract sample size from the models if missing nobs parameter
+  if (missing(nobs)) nobs<- nobs(m[[which(!sapply(m, inherits, "try-error"))[1]]])
+
   CICc.x<- lapply(seq_along(Cx), function(i, Cx, q, nobs) CICc(C=Cx[[i]], q=q[[i]], n=nobs), C=Cx, q=q, nobs=nobs)
 
-  res<- data.frame(q=q, C=as.numeric(Cx), p.value=as.numeric(Cx.pval), CICc=as.numeric(CICc.x), row.names=names(g))
+  res<- data.frame(q=q, C=as.numeric(Cx), p.value=as.numeric(Cx.pval), CICc=as.numeric(CICc.x), row.names=names(x))
   res<- res[order(res$CICc),]
   res$delta<- res$CICc - min(res$CICc)
   res$logLik<- - res$delta / 2
   likelihood<- exp(res$logLik)
   res$weight<- likelihood / sum(likelihood)
 
-  out<- list(graph=g, res=res, models=m, FUN=FUN, args=args0, conditionalIndependences=condInd, formulaArg=formulaArg, nobs=nobs)
+  out<- list(graph=x, res=res, models=m, FUN=FUN, args=args0, formulaArg=formulaArg, conditionalIndependences=condInd, nobs=nobs)
   class(out)<- "dSep"
 
   if (pathCoef){
-    message("Calculate path coefficients...")
-    out$pathCoefficients<- pathCoef(out, FUN=FUN, formulaArg=formulaArg, cl=cl, alpha=0.05, ...)
+    message("Estimating path coefficients...")
+
+## TODO: try
+# match.call()
+# match(pathCoef, expand.dots=TRUE)
+## http://www.r-bloggers.com/function-argument-lists-and-missing/
+argList<-  as.list(match.call(expand.dots = TRUE)[-1])
+# Enforce inclusion of non-optional arguments
+argList$x<- NULL
+argList$pathCoef<- NULL
+# do.call(pathCoef, argList)
+
+    out$pathCoefficients<- pathCoef.dSep(out, cl=cl, ...)
     class(out)<- "dSep"
   }
 
   return(out)
 }
+
 
 #' Path coefficients
 #'
@@ -399,10 +427,12 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
     pValues(y)[2] # Intercept: [1]
   })
   names(coefM)<- names(pValM)<- varsM$response
+
   varsM$coefficients<- unlist(coefM)
   varsM$p.value<- unlist(pValM)
   varsM$signif<- varsM$p.value < alpha
   varsM$label<- paste0(round(varsM$coefficients, 2), ifelse(varsM$signif, " *", ""))
+  varsM$label<- gsub("NANA", "NA", varsM$label)
 
   ## Match models with every graph edge and set edgeData
   for (i in seq_along(x)){ # Graph loop
@@ -427,7 +457,7 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
     # edgeData(x[[i]]); edgeData(x[[i]], attr="label")
   }
 
-  out<- list(graph=x, res=varsM, models=m, FUN=FUN, args=args0)
+  out<- list(graph=x, res=varsM, models=m, FUN=FUN, args=args0, formulaArg=formulaArg, alpha=alpha)
   class(out)<- "pathCoef"
 
   return(out)
@@ -531,7 +561,7 @@ plot.pathCoef<- function(x, y, lty=c(signif=1, nonSignif=2), dSep, ...){
     ew<- as.logical(unlist(graph::edgeWeights(g[[i]], attr="signif", type.checker=is.logical)))
     ew<- ew[setdiff(seq(along=ew), Rgraphviz::removedEdges(g[[i]]))]
     ew[ew]<- lty[1]
-    ew[!ew]<- lty[2]
+    ew[!ew | is.na(ew)]<- lty[2]
     eAttrs$lty<- ew
 
     names(eAttrs$label)<- names(eAttrs$lty)<- graph::edgeNames(g[[i]])
@@ -544,6 +574,11 @@ plot.pathCoef<- function(x, y, lty=c(signif=1, nonSignif=2), dSep, ...){
     }
     eAttrs
   }, dSep=dSep)
+  names(eAttrs)<- names(g)
+
+  if (legend){
+    legend("bottomright", c("Significant", "Non significant"), lty=lty, title=as.expression(bquote( alpha == .(alpha))))
+  }
 
   par(parOri)
 
