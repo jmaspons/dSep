@@ -141,8 +141,8 @@ graph.conditionalIndependences<- function(x, ...){
     for (j in 1:nrow(dSepPair)){ # Edge loop
       to<- dSepPair$response[j]
       from<- dSepPair$predictor[j]
-      # graph::edgeData(g, from=from, to=to, attr="coefficients")<- dSepPair$coefficients[j]
-      graph::edgeData(g, from=from, to=to, attr="p.value")<- dSepPair$p.value[j]
+      # graph::edgeData(g, from=from, to=to, attr="coefficients")<- as.numeric(dSepPair$coefficients[j])
+      graph::edgeData(g, from=from, to=to, attr="p.value")<- as.numeric(dSepPair$p.value[j])
     }
     # edgeData(g); edgeData(g, attr="p.value")
   }
@@ -258,7 +258,7 @@ dSep.list<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ..
     }
     message("Running on ", length(cl), " cores")
     parallel::clusterExport(cl=cl, "FUN", envir=environment())
-    m<- parallel::parLapply(cl=cl, X=args, fun=function(y){
+    m<- parallel::parLapply(cl=cl, X=args, function(y){
       try(do.call(FUN, y))
     })
     if (numericCl){
@@ -297,7 +297,10 @@ dSep.list<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ..
   })
 
   ## Try to extract sample size from the models if n parameter is missing
-  if (missing(n)) n<- nobs(m[[which(!sapply(m, inherits, "try-error"))[1]]])
+  if (missing(n)){
+    selEg<- which(!sapply(m, inherits, "try-error"))[1]
+    n<- ifelse(is.na(selEg), NA, nobs(m[[selEg]]))
+  }
 
   CICc.x<- lapply(seq_along(Cx), function(i, Cx, q, n) CICc(C=Cx[[i]], q=q[[i]], n=n), C=Cx, q=q, n=n)
 

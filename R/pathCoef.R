@@ -120,8 +120,8 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
     for (j in 1:nrow(tmpVars)){ # Edge loop
       to<- tmpVars$response[j]
       from<- tmpVars$predictor[j]
-      graph::edgeData(x[[i]], from=from, to=to, attr="coefficients")<- tmpVars$coefficients[j]
-      graph::edgeData(x[[i]], from=from, to=to, attr="p.value")<- tmpVars$p.value[j]
+      graph::edgeData(x[[i]], from=from, to=to, attr="coefficients")<- as.numeric(tmpVars$coefficients[j])
+      graph::edgeData(x[[i]], from=from, to=to, attr="p.value")<- as.numeric(tmpVars$p.value[j])
     }
     # edgeData(x[[i]]); edgeData(x[[i]], attr="p.value")
   }
