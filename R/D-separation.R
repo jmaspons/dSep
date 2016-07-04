@@ -30,6 +30,7 @@ CICc <- function(C, q, n){
   C + 2 * q * (n / (n - 1 - q))
 }
 
+## conditionalIndependences class ----
 
 #' Conditional independences from a directed acyclid graphs (DAG)
 #'
@@ -99,8 +100,55 @@ condIndep<- function(x, orderResponse){
   return(res)
 }
 
+# @export
+graph.conditionalIndependences<- function(x, ...){
+  dSepPair<- lapply(x$conditionalIndependences, function(y) y$dSep)
+  dSepPair<- do.call(rbind, dSepPair)
+  dSepPair$indepVar<- sapply(x$model, function(y) y$independentVar)
+  nod<- sort(unique(unlist(dSepPair)))
 
-## Test models ----
+  edg<- as.list(nod)
+  names(edg)<- nod
+
+  edg<- lapply(edg, function(n){
+    tail<- dSepPair$indepVar %in% n
+    if (any(tail)){
+      tmp<- dSepPair[tail,]
+      return(setdiff(tmp[[1]], n))
+    }else{
+      return(character())
+    }
+  })
+  g<- graphNEL(nodes=nod, edgeL=edg, edgemod="directed")
+
+  pVal<- sapply(x$model, function(y) y$p.value)
+
+  ## Add p-value to edges of the d-separated variables
+  if (any(!is.null(pVal))){
+    dSepPair$p.value<- pVal
+
+    edgName<- graph::edgeNames(g) # tail~head
+    tmpVars<- as.data.frame(do.call(rbind, strsplit(edgName, "~")), stringsAsFactors=FALSE)
+    colnames(tmpVars)<- c("predictor", "response")
+    dSepPair<- merge(dSepPair, tmpVars)
+
+    # graph::edgeDataDefaults(g, "coefficients")<- NA_real_
+    graph::edgeDataDefaults(g, "p.value")<- NA_real_
+
+    for (j in 1:nrow(dSepPair)){ # Edge loop
+      to<- dSepPair$response[j]
+      from<- dSepPair$predictor[j]
+      # graph::edgeData(g, from=from, to=to, attr="coefficients")<- dSepPair$coefficients[j]
+      graph::edgeData(g, from=from, to=to, attr="p.value")<- dSepPair$p.value[j]
+    }
+    # edgeData(g); edgeData(g, attr="p.value")
+  }
+
+
+  return (g)
+}
+
+## dSep class ----
 
 #' Path analysis usding d-separation
 #'

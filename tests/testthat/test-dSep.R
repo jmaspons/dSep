@@ -144,3 +144,34 @@ test_that("MCMCglmm works", {
   parallel::stopCluster(cl)
 })
 
+## dSep methods ----
+context("Methods for dSep objects")
+
+load(system.file(c("extdata/sampleModels.RData"), package="dSep"), verbose=FALSE)
+
+test_that("print works", {
+  lapply(D, function(x) return(x))
+  lapply(D, function(x) return(x$pathCoefficients))
+})
+
+test_that("summary works", {
+  # lapply(D, function(x) summary(x))
+  # lapply(D, function(x) summary(x$pathCoefficients))
+  # lapply(D, function(x) dSep:::summary.list.conditionalIndependences(x$conditionalIndependences))
+  lapply(D, function(x) expect_is(summary(x), "summary.dSep"))
+  lapply(D[sapply(D, function(x) !is.null(x$pathCoefficients))], function(x) expect_is(summary(x$pathCoefficients), "summary.pathCoef"))
+  lapply(D, function(x) expect_is(dSep:::summary.list.conditionalIndependences(x$conditionalIndependences), "data.frame"))
+})
+
+test_that("plot works", {
+  skip_if_not_installed("Rgraphviz")
+
+  lapply(D, function(x) ifelse(inherits(x, "dSep"), try(plot(x)), "ERROR"))
+  lapply(D, function(x) ifelse(inherits(x$pathCoefficients, "pathCoef"), try(plot(x)), "ERROR"))
+
+  lapply(D, function(x) ifelse(inherits(x, "dSep"), try(plot(x, plotCoef=FALSE, plotdSep=FALSE)), "ERROR"))
+  lapply(D, function(x) ifelse(inherits(x, "dSep"), try(plot(x, plotCoef=TRUE, plotdSep=FALSE)), "ERROR"))
+  lapply(D, function(x) ifelse(inherits(x, "dSep"), try(plot(x, plotCoef=FALSE, plotdSep=TRUE)), "ERROR"))
+  lapply(D, function(x) ifelse(inherits(x, "dSep"), try(plot(x, plotCoef=TRUE, plotdSep=TRUE)), "ERROR"))
+})
+

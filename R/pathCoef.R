@@ -1,7 +1,19 @@
 #' Path coefficients
+#' It is advised to standardize the input data (see \code{\link{scale}}). By doing this, the standardized coefficients represents the relative
+#' strength of each causal relationship in the model.
 #'
 #' @name pathCoef
 #'
+#' @param x a \linkS4class{graph} or a list of graph objects.
+#' @param FUN a function or a the name of the function to test the conditional independences.
+#' Currently tested with \code{\link[stats]{lm}}, \code{\link[stats]{glm}}, \code{\link[nlme]{gls}}, \code{\link[caper]{pgls}}, \code{\link[MCMCglmm]{MCMCglmm}} and \code{\link[brms]{brm}}.
+#' @param formulaArg argument name from FUN that accepts the formula parameter of the lineal model.
+#' @param nobs sample size of the dataset. If omited, the function try to extract from the model.
+#' @param cl the number of CPU cores or a cluster object to run the models in parallel. Cluster object can be defined with \code{\link[parallel]{makeCluster}}
+#' in package \code{parallel} or \code{\link[snow]{makeCluster}} from \code{snow} package.
+#' @param ... parameters passed to FUN. Parameters must be named following the FUN arguments (e.g. data=data.frame()).
+#' @return a pathCoef object.
+#' @author Joan Maspons <\email{j.maspons@@creaf.uab.cat}>
 #' @examples
 #' ## Dummy data
 #' g1<- gRbase::dag(~a:c:d + b:d)
@@ -95,8 +107,6 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
 
   varsM$coefficients<- unlist(coefM)
   varsM$p.value<- unlist(pValM)
-  varsM$label<- paste0(round(varsM$coefficients, 2), ifelse(varsM$p.value < alpha, " *", ""))
-  varsM$label<- gsub("NANA", "NA", varsM$label)
 
   ## Match models with every graph edge and set edgeData
   for (i in seq_along(x)){ # Graph loop
@@ -107,16 +117,14 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
 
     graph::edgeDataDefaults(x[[i]], "coefficients")<- NA_real_
     graph::edgeDataDefaults(x[[i]], "p.value")<- NA_real_
-    graph::edgeDataDefaults(x[[i]], "label")<- ""
 
     for (j in 1:nrow(tmpVars)){ # Edge loop
       to<- tmpVars$response[j]
       from<- tmpVars$predictor[j]
       graph::edgeData(x[[i]], from=from, to=to, attr="coefficients")<- tmpVars$coefficients[j]
       graph::edgeData(x[[i]], from=from, to=to, attr="p.value")<- tmpVars$p.value[j]
-      graph::edgeData(x[[i]], from=from, to=to, attr="label")<- tmpVars$label[j]
     }
-    # edgeData(x[[i]]); edgeData(x[[i]], attr="label")
+    # edgeData(x[[i]]); edgeData(x[[i]], attr="p.value")
   }
 
   out<- list(graph=x, res=varsM, models=m, FUN=FUN, args=args0, formulaArg=formulaArg, alpha=alpha)
