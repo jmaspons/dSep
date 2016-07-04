@@ -5,9 +5,10 @@
 #' @param alpha significance level.
 #' @param lty a vector of 2 elements with the line type of significant and non significant paths.
 #' @param color a vector of 2 elements with the color of the causal edges and the color of the d-separation edges.
-#' @import graph Rgraphviz
+#' @import graph
+# @import Rgraphviz
 #' @export
-plot.dSep<- function(x, y, plotCoef=TRUE, plotdSep=TRUE, legend=TRUE, lty=c(signif=1, nonSignif=2), color=c(causal="black", dsep="red"), alpha=0.05, ...){
+plot.dSep<- function(x, y, plotCoef=TRUE, plotdSep=FALSE, legend=TRUE, lty=c(signif=1, nonSignif=2), color=c(causal="black", dsep="red"), alpha=0.05, ...){
   if (!require(Rgraphviz)){
     stop("You need to install Rgraphviz to plot the results:\n",
          "\tsource('https://bioconductor.org/biocLite.R'\n",
@@ -68,11 +69,12 @@ plot.dSep<- function(x, y, plotCoef=TRUE, plotdSep=TRUE, legend=TRUE, lty=c(sign
 #'
 #' @param alpha significance level.
 #' @param lty a vector of 2 elements with the line type of significant and non significant paths.
-#' @import graph Rgraphviz
+#' @import graph
+# @import Rgraphviz
 #' @export
 plot.pathCoef<- function(x, y, plotCoef=TRUE, legend=TRUE, lty=c(signif=1, nonSignif=2), ...){
   if (!require(Rgraphviz)){
-    stop("You need to install Rgraphviz:\n",
+    stop("You need to install Rgraphviz to plot the results:\n",
          "\tsource('https://bioconductor.org/biocLite.R'\n",
          "\tbiocLite('Rgraphviz')")
   }
