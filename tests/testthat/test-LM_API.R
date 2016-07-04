@@ -9,9 +9,9 @@
 #
 # cl<- parallel::makeCluster(2, type="FORK")
 #
-# d.lm<- dSep(g1, FUN="lm", nobs=nrow(d), data=d)
-# d.glm<- dSep(g1, FUN="glm", nobs=nrow(d), data=d)
-# d.gls<- dSep(g, FUN=nlme::gls, formulaArg="model", nobs=nrow(d), data=d)
+# d.lm<- dSep(g1, FUN="lm", n=nrow(d), data=d)
+# d.glm<- dSep(g1, FUN="glm", n=nrow(d), data=d)
+# d.gls<- dSep(g, FUN=nlme::gls, formulaArg="model", n=nrow(d), data=d)
 #
 # data(shorebird, package="caper")
 # shorebird.data[,2:5]<- scale(log(shorebird.data[,2:5]))
@@ -19,11 +19,11 @@
 # g3<- gRbase::dag(~Egg.Mass:M.Mass:F.Mass)
 # g4<- gRbase::dag(~Egg.Mass:M.Mass:Cl.size + Cl.size:F.Mass:M.Mass)
 # gPhy<- list(mPhy1=g3, mPhy2=g4)
-# d.pgls<- dSep(gPhy, FUN="pgls", nobs=nrow(shorebird$data), cl=cl, data=shorebird)
+# d.pgls<- dSep(gPhy, FUN="pgls", n=nrow(shorebird$data), cl=cl, data=shorebird)
 #
 # library(brms)
-# d.brmfit<- dSep(g1, FUN=brms::brm, nobs=nrow(d), cl=cl, pathCoef=FALSE, data=d)
-# d.MCMCglmm<- dSep(g, FUN=MCMCglmm::MCMCglmm, formulaArg="fixed", nobs=nrow(d), cl=cl, data=d, verbose=FALSE)
+# d.brmfit<- dSep(g1, FUN=brms::brm, n=nrow(d), cl=cl, pathCoef=FALSE, data=d)
+# d.MCMCglmm<- dSep(g, FUN=MCMCglmm::MCMCglmm, formulaArg="fixed", n=nrow(d), cl=cl, data=d, verbose=FALSE)
 #
 # parallel::stopCluster(cl)
 # D<- list(lm=d.lm, glm=d.glm, gls=d.gls, pgls=d.pgls, MCMCglmm=d.MCMCglmm, brmsfit=d.brmfit)

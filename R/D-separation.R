@@ -34,6 +34,9 @@ CICc <- function(C, q, n){
 
 #' Conditional independences from a directed acyclid graphs (DAG)
 #'
+#' @param x a \linkS4class{graph}.
+#' @param orderResponse character vector with the order of precedence of the variables when choosing a response variable for the d-separation test.
+#' @return a \code{conditionalIndependences} object.
 #' @examples
 #' condIndep(g<- dag(~BV:season:interCV + FS:season, forceCheck=TRUE))
 #' @import graph
@@ -158,7 +161,7 @@ graph.conditionalIndependences<- function(x, ...){
 #' @param FUN a function or a the name of the function to test the conditional independences.
 #' Currently tested with \code{\link[stats]{lm}}, \code{\link[stats]{glm}}, \code{\link[nlme]{gls}}, \code{\link[caper]{pgls}}, \code{\link[MCMCglmm]{MCMCglmm}} and \code{\link[brms]{brm}}.
 #' @param formulaArg argument name from FUN that accepts the formula parameter.
-#' @param nobs sample size of the dataset.
+#' @param n sample size of the dataset.
 #' @param cl the number of CPU cores or a cluster object to run the models in parallel. Cluster object can be defined with \code{\link[parallel]{makeCluster}}
 #' in package \code{parallel} or \code{\link[snow]{makeCluster}} from \code{snow} package.
 #' @param pathCoef if \code{TRUE} calculates the path coefficient with \code{\link{pathCoef}}. It is advised to standardize the
@@ -177,11 +180,11 @@ graph.conditionalIndependences<- function(x, ...){
 #' d<- data.frame(a=rnorm(100), b=rnorm(100), c=rnorm(100), d=rnorm(100))
 #'
 #' ## Use of different functions
-#' m.lm<- dSep(g1, FUN="lm", nobs=nrow(d), data=d)
-#' m.glm<- dSep(g, FUN="glm", nobs=nrow(d), data=d)
+#' m.lm<- dSep(g1, FUN="lm", n=nrow(d), data=d)
+#' m.glm<- dSep(g, FUN="glm", n=nrow(d), data=d)
 #'
 #' if (require("nlme"))
-#'   m.gls<- dSep(g1, FUN=gls, formulaArg="model", nobs=nrow(d), data=d)
+#'   m.gls<- dSep(g1, FUN=gls, formulaArg="model", n=nrow(d), data=d)
 #'
 #' if (require(caper)){
 #'   data(shorebird, package="caper")
@@ -189,42 +192,42 @@ graph.conditionalIndependences<- function(x, ...){
 #'   shorebird<- caper::comparative.data(shorebird.tree, shorebird.data, 'Species')
 #'   g3<- gRbase::dag(~Egg.Mass:M.Mass:F.Mass)
 #'   g4<- gRbase::dag(~Egg.Mass:M.Mass:Cl.size + Cl.size:F.Mass:M.Mass)
-#'   m.pgls<- dSep(list(mPhy1=g3, mPhy2=g4), FUN=caper::pgls, nobs=nrow(d), cl=3, data=shorebird, lambda='ML')
+#'   m.pgls<- dSep(list(mPhy1=g3, mPhy2=g4), FUN=caper::pgls, n=nrow(d), cl=3, data=shorebird, lambda='ML')
 #' }
 #'
 #' if (require("brms"))
-#'   m.brmfit<- dSep(g1, FUN=brms::brm, nobs=nrow(d), cl=2, pathCoef=FALSE, data=d)
+#'   m.brmfit<- dSep(g1, FUN=brms::brm, n=nrow(d), cl=2, pathCoef=FALSE, data=d)
 #'
 #' if (require("MCMCglmm"))
-#'   m.MCMCglmm<- dSep(g1, FUN=MCMCglmm::MCMCglmm, formulaArg="fixed", nobs=nrow(d), cl=2, data=d, verbose=FALSE)
+#'   m.MCMCglmm<- dSep(g1, FUN=MCMCglmm::MCMCglmm, formulaArg="fixed", n=nrow(d), cl=2, data=d, verbose=FALSE)
 #'
 #' ##
 #' plot(m.glm)
 #' @export
-dSep<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE, ...) UseMethod("dSep")
+dSep<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ...) UseMethod("dSep")
 
 #' @rdname dSep
 #' @export
-dSep.graph<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE, ...){
-  dSep(list(x), FUN=FUN, formulaArg=formulaArg, nobs=nobs, cl=cl, pathCoef=pathCoef, ...)
+dSep.graph<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ...){
+  dSep(list(x), FUN=FUN, formulaArg=formulaArg, n=n, cl=cl, pathCoef=pathCoef, ...)
 }
 
 #' @rdname dSep
 #' @export
-dSep.pathCoef<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE, ...){
-  out<- dSep(list(x$graph), FUN=FUN, formulaArg=formulaArg, nobs=nobs, cl=cl, pathCoef=FALSE, ...)
+dSep.pathCoef<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ...){
+  out<- dSep(list(x$graph), FUN=FUN, formulaArg=formulaArg, n=n, cl=cl, pathCoef=FALSE, ...)
   out$pathCoefficients<- x
   class(out)<- "dSep"
 
   return(out)
 }
 
-# FUN="lm"; formulaArg="formula"; nobs=nrow(d); cl=1; args0<- list(data=d)
+# FUN="lm"; formulaArg="formula"; n=nrow(d); cl=1; args0<- list(data=d)
 #' @rdname dSep
 #' @import graph
 #' @importFrom caper pgls
 #' @export
-dSep.list<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE, ...){
+dSep.list<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ...){
   if (is.null(names(x))) names(x)<- seq_along(x)
   q<- sapply(x, function(y) graph::numNodes(y) + graph::numEdges(y))
   FUN<- match.fun(FUN)
@@ -293,10 +296,10 @@ dSep.list<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE,
     1 - pchisq(p, 2 * length(p))
   })
 
-  ## Try to extract sample size from the models if missing nobs parameter
-  if (missing(nobs)) nobs<- nobs(m[[which(!sapply(m, inherits, "try-error"))[1]]])
+  ## Try to extract sample size from the models if n parameter is missing
+  if (missing(n)) n<- nobs(m[[which(!sapply(m, inherits, "try-error"))[1]]])
 
-  CICc.x<- lapply(seq_along(Cx), function(i, Cx, q, nobs) CICc(C=Cx[[i]], q=q[[i]], n=nobs), C=Cx, q=q, nobs=nobs)
+  CICc.x<- lapply(seq_along(Cx), function(i, Cx, q, n) CICc(C=Cx[[i]], q=q[[i]], n=n), C=Cx, q=q, n=n)
 
   res<- data.frame(q=q, C=as.numeric(Cx), p.value=as.numeric(Cx.pval), CICc=as.numeric(CICc.x), row.names=names(x))
   res<- res[order(res$CICc),]
@@ -305,7 +308,7 @@ dSep.list<- function(x, FUN="lm", formulaArg="formula", nobs, cl, pathCoef=TRUE,
   likelihood<- exp(res$logLik)
   res$weight<- likelihood / sum(likelihood)
 
-  out<- list(graph=x, res=res, models=m, FUN=FUN, args=args0, formulaArg=formulaArg, conditionalIndependences=condInd, nobs=nobs)
+  out<- list(graph=x, res=res, models=m, FUN=FUN, args=args0, formulaArg=formulaArg, conditionalIndependences=condInd, n=n)
   class(out)<- "dSep"
 
   if (pathCoef){
@@ -387,7 +390,7 @@ summary.dSep<- function(x, ....){
   conditionalIndependences<- summary.list.conditionalIndependences(x$conditionalIndependences)
   pathCoefficients<- summary.pathCoef(x$pathCoefficients)
 
-  out<- list(res=x$res, FUN=x$FUN, conditionalIndependences=conditionalIndependences, nobs=nobs)
+  out<- list(res=x$res, FUN=x$FUN, conditionalIndependences=conditionalIndependences, n=n)
     if (!is.null(x$pathCoefficients)){
     out<- c(out, list(pathCoefficients=pathCoefficients))
   }

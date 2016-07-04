@@ -8,7 +8,6 @@
 #' @param FUN a function or a the name of the function to test the conditional independences.
 #' Currently tested with \code{\link[stats]{lm}}, \code{\link[stats]{glm}}, \code{\link[nlme]{gls}}, \code{\link[caper]{pgls}}, \code{\link[MCMCglmm]{MCMCglmm}} and \code{\link[brms]{brm}}.
 #' @param formulaArg argument name from FUN that accepts the formula parameter of the lineal model.
-#' @param nobs sample size of the dataset. If omited, the function try to extract from the model.
 #' @param cl the number of CPU cores or a cluster object to run the models in parallel. Cluster object can be defined with \code{\link[parallel]{makeCluster}}
 #' in package \code{parallel} or \code{\link[snow]{makeCluster}} from \code{snow} package.
 #' @param ... parameters passed to FUN. Parameters must be named following the FUN arguments (e.g. data=data.frame()).
