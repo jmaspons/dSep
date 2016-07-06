@@ -103,7 +103,6 @@ condIndep<- function(x, orderResponse){
   return(res)
 }
 
-# @export
 graph.conditionalIndependences<- function(x, ...){
   dSepPair<- lapply(x$conditionalIndependences, function(y) y$dSep)
   dSepPair<- do.call(rbind, dSepPair)
@@ -161,12 +160,14 @@ graph.conditionalIndependences<- function(x, ...){
 #' @param FUN a function or a the name of the function to test the conditional independences.
 #' Currently tested with \code{\link[stats]{lm}}, \code{\link[stats]{glm}}, \code{\link[nlme]{gls}}, \code{\link[caper]{pgls}}, \code{\link[MCMCglmm]{MCMCglmm}} and \code{\link[brms]{brm}}.
 #' @param formulaArg argument name from FUN that accepts the formula parameter.
-#' @param n sample size of the dataset.
+#' @param orderResponse parameter passed to \code{\link{condIndep}}.
+#' @param n sample size of the dataset. If omited the function tries to guess from the models using \code{\link{nobs}} and custom functions.
 #' @param cl the number of CPU cores or a cluster object to run the models in parallel. Cluster object can be defined with \code{\link[parallel]{makeCluster}}
 #' in package \code{parallel} or \code{\link[snow]{makeCluster}} from \code{snow} package.
 #' @param pathCoef if \code{TRUE} calculates the path coefficient with \code{\link{pathCoef}}. It is advised to standardize the
 #' input data (see \code{\link{scale}}). By doing this, the standardized coefficients represents the relative
 #' strength of each causal relationship in the model.
+#' @param alpha significance level.
 #' @param ... parameters passed to FUN. Parameters must be named following the FUN arguments (e.g. data=data.frame()).
 #' @return a dSep object.
 #' @author Joan Maspons <\email{j.maspons@@creaf.uab.cat}>
@@ -192,14 +193,32 @@ graph.conditionalIndependences<- function(x, ...){
 #'   shorebird<- caper::comparative.data(shorebird.tree, shorebird.data, 'Species')
 #'   g3<- gRbase::dag(~Egg.Mass:M.Mass:F.Mass)
 #'   g4<- gRbase::dag(~Egg.Mass:M.Mass:Cl.size + Cl.size:F.Mass:M.Mass)
-#'   m.pgls<- dSep(list(mPhy1=g3, mPhy2=g4), FUN=caper::pgls, n=nrow(d), cl=3, data=shorebird, lambda='ML')
+#'   m1.pgls<- dSep(list(mPhy1=g3, mPhy2=g4), FUN=caper::pgls, n=nrow(d), cl=3, data=shorebird, lambda='ML')
+#'
+#'   if (require(gRbase)){
+#'     rhino.dat <- read.csv("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.csv")
+#'     rhino.tree <- ape::read.tree("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.tree")
+#'     com.dat<- caper::comparative.data(rhino.tree, rhino.dat, SP, vcv=TRUE, vcv.dim=3, warn.dropped=TRUE)
+#'     m<- list()
+#'     m$h1<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:DD)
+#'     m$h2<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:DD:LS)
+#'     m$h3<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:NL)
+#'     m$h4<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:BM:NL)
+#'     m$h5<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:BM:NL:DD)
+#'     m$h6<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:BM)
+#'     m$h7<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:BM:LS)
+#'     m$h8<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL)
+#'     m$h9<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:LS)
+#'
+#'     m2.pgls<- dSep(m, FUN=pgls, cl=parallel::detectCores(), orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML")
+#'   }
 #' }
 #'
 #' if (require("brms"))
-#'   m.brmfit<- dSep(g1, FUN=brms::brm, n=nrow(d), cl=2, pathCoef=FALSE, data=d)
+#'   m.brmfit<- dSep(g1, FUN=brm, n=nrow(d), cl=parallel::detectCores(), pathCoef=FALSE, data=d)
 #'
 #' if (require("MCMCglmm"))
-#'   m.MCMCglmm<- dSep(g1, FUN=MCMCglmm::MCMCglmm, formulaArg="fixed", n=nrow(d), cl=2, data=d, verbose=FALSE)
+#'   m.MCMCglmm<- dSep(g1, FUN=MCMCglmm, formulaArg="fixed", n=nrow(d), cl=parallel::detectCores(), data=d, verbose=FALSE)
 #'
 #' ##
 #' plot(m.glm)
@@ -208,14 +227,14 @@ dSep<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ...) Us
 
 #' @rdname dSep
 #' @export
-dSep.graph<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ...){
-  dSep(list(x), FUN=FUN, formulaArg=formulaArg, n=n, cl=cl, pathCoef=pathCoef, ...)
+dSep.graph<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl, pathCoef=TRUE, ...){
+  dSep(list(x), FUN=FUN, orderResponse=orderResponse, formulaArg=formulaArg, n=n, cl=cl, pathCoef=pathCoef, ...)
 }
 
 #' @rdname dSep
 #' @export
-dSep.pathCoef<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ...){
-  out<- dSep(list(x$graph), FUN=FUN, formulaArg=formulaArg, n=n, cl=cl, pathCoef=FALSE, ...)
+dSep.pathCoef<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl, pathCoef=TRUE, ...){
+  out<- dSep(list(x$graph), FUN=FUN, orderResponse=orderResponse, formulaArg=formulaArg, n=n, cl=cl, pathCoef=FALSE, ...)
   out$pathCoefficients<- x
   class(out)<- "dSep"
 
@@ -227,12 +246,13 @@ dSep.pathCoef<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE
 #' @import graph
 #' @importFrom caper pgls
 #' @export
-dSep.list<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ...){
+dSep.list<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl, pathCoef=TRUE, ...){
   if (is.null(names(x))) names(x)<- seq_along(x)
   q<- sapply(x, function(y) graph::numNodes(y) + graph::numEdges(y))
+
   FUN<- match.fun(FUN)
 
-  condInd<- lapply(x, condIndep, orderResponse=match.arg(orderResponse))
+  condInd<- lapply(x, condIndep, orderResponse=orderResponse)
   formulas<- unique(unlist(lapply(condInd, function(y) lapply(y$model, function(z) z$formula))))
 
   args0<- list(...)
@@ -393,8 +413,8 @@ summary.dSep<- function(x, ....){
   conditionalIndependences<- summary.list.conditionalIndependences(x$conditionalIndependences)
   pathCoefficients<- summary.pathCoef(x$pathCoefficients)
 
-  out<- list(res=x$res, FUN=x$FUN, conditionalIndependences=conditionalIndependences, n=n)
-    if (!is.null(x$pathCoefficients)){
+  out<- list(res=x$res, FUN=x$FUN, conditionalIndependences=conditionalIndependences, n=x$n)
+  if (!is.null(x$pathCoefficients)){
     out<- c(out, list(pathCoefficients=pathCoefficients))
   }
 

@@ -6,6 +6,23 @@ g2<- gRbase::dag(~a:c:d + b:d:a)
 g<- list(m1=g1, m2=g2)
 d<- data.frame(a=rnorm(100), b=rnorm(100), c=rnorm(100), d=rnorm(100))
 
+if (require(caper)){
+  rhino.dat <- read.csv("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.csv")
+  rhino.tree <- ape::read.tree("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.tree")
+  com.dat<- caper::comparative.data(rhino.tree, rhino.dat, SP, vcv=TRUE, vcv.dim=3, warn.dropped=TRUE)
+  m<- list()
+  m$h1<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:DD)
+  m$h2<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:DD:LS)
+  # m$h3<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:NL)
+  # m$h4<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:BM:NL)
+  # m$h5<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:BM:NL:DD)
+  # m$h6<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:BM)
+  # m$h7<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:BM:LS)
+  # m$h8<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL)
+  # m$h9<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:LS)
+}
+
+## lm ----
 context("dSep-FUN=lm")
 
 test_that("lm works", {
@@ -27,6 +44,7 @@ test_that("lm works", {
   parallel::stopCluster(cl)
 })
 
+## glm ----
 context("dSep-FUN=glm")
 
 test_that("glm works", {
@@ -48,6 +66,7 @@ test_that("glm works", {
   parallel::stopCluster(cl)
 })
 
+## gls ----
 context("dSep-FUN=gls")
 
 test_that("gls works", {
@@ -70,10 +89,13 @@ test_that("gls works", {
   # parallel::stopCluster(cl)
 })
 
+## pgls ----
+
 context("dSep-FUN=pgls")
 
 test_that("pgls works", {
   skip_if_not_installed("caper")
+  # library(caper)
   data(shorebird, package="caper")
   shorebird.data[,2:5]<- scale(log(shorebird.data[,2:5]))
   shorebird<- caper::comparative.data(phy=shorebird.tree, data=shorebird.data, names.col=Species)
@@ -97,7 +119,14 @@ test_that("pgls works", {
   d.pgls<- dSep(gPhy, FUN="pgls", n=nrow(shorebird$data), cl=cl, data=shorebird)
   expect_is(d.pgls, "dSep")
   parallel::stopCluster(cl)
+
+
+  ## Example 2
+  d.pgls<- dSep(m, FUN=caper::pgls, cl=4, orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML")
+  expect_is(d.pgls, "dSep")
 })
+
+## brm ----
 
 context("dSep-FUN=brm")
 
@@ -122,6 +151,8 @@ test_that("brm works", {
   # parallel::stopCluster(cl)
 })
 
+## MCMCglmm ----
+
 context("dSep-FUN=MCMCglmm")
 
 test_that("MCMCglmm works", {
@@ -144,10 +175,19 @@ test_that("MCMCglmm works", {
   parallel::stopCluster(cl)
 })
 
+
 ## dSep methods ----
 context("Methods for dSep objects")
 
-load(system.file(c("extdata/sampleModels.RData"), package="dSep"), verbose=FALSE)
+# load(system.file(c("extdata/sampleModels.RData"), package="dSep"), verbose=FALSE)
+
+## Calls with missing "n"
+D<- list()
+suppressMessages(D$lm<- dSep(g, FUN="lm", data=d))
+suppressMessages(D$glm<- dSep(g, FUN="glm", pathCoef=FALSE, data=d))
+suppressMessages(D$gls<- dSep(g1, FUN=nlme::gls, formulaArg="model", data=d))
+suppressMessages(D$pgls<- dSep(m, FUN=caper::pgls, cl=4, orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML"))
+sapply(D, function(x) class(x))
 
 test_that("print works", {
   lapply(D, function(x) return(x))

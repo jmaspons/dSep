@@ -10,6 +10,7 @@
 #' @param formulaArg argument name from FUN that accepts the formula parameter of the lineal model.
 #' @param cl the number of CPU cores or a cluster object to run the models in parallel. Cluster object can be defined with \code{\link[parallel]{makeCluster}}
 #' in package \code{parallel} or \code{\link[snow]{makeCluster}} from \code{snow} package.
+#' @param alpha significance level.
 #' @param ... parameters passed to FUN. Parameters must be named following the FUN arguments (e.g. data=data.frame()).
 #' @return a pathCoef object.
 #' @author Joan Maspons <\email{j.maspons@@creaf.uab.cat}>

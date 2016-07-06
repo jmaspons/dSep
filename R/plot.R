@@ -2,9 +2,13 @@
 
 #' @rdname dSep
 #'
-#' @param alpha significance level.
+#' @param x a dSep object.
+#' @param plotCoef if \code{TRUE} plot the path coefficients.
+#' @param plotdSep if \code{TRUE} plot the d-separation paths. By default in red.
+#' @param legend if \code{TRUE} add a legend.
 #' @param lty a vector of 2 elements with the line type of significant and non significant paths.
-#' @param color a vector of 2 elements with the color of the causal edges and the color of the d-separation edges.
+#' @param color a vector of 2 elements with the color of the causal paths and the color of the d-separation paths.
+#' @param alpha significance level.
 #' @import graph
 # @import Rgraphviz
 #' @export
@@ -67,12 +71,15 @@ plot.dSep<- function(x, y, plotCoef=TRUE, plotdSep=FALSE, legend=TRUE, lty=c(sig
 
 #' @rdname pathCoef
 #'
-#' @param alpha significance level.
+#' @param x a \code{pathCoef} object.
+#' @param plotCoef if \code{TRUE} plot the path coefficients.
+#' @param legend if \code{TRUE} add a legend.
 #' @param lty a vector of 2 elements with the line type of significant and non significant paths.
+#' @param alpha significance level.
 #' @import graph
 # @import Rgraphviz
 #' @export
-plot.pathCoef<- function(x, y, plotCoef=TRUE, legend=TRUE, lty=c(signif=1, nonSignif=2), ...){
+plot.pathCoef<- function(x, y, plotCoef=TRUE, legend=TRUE, lty=c(signif=1, nonSignif=2), alpha=0.05, ...){
   if (!require(Rgraphviz)){
     stop("You need to install Rgraphviz to plot the results:\n",
          "\tsource('https://bioconductor.org/biocLite.R'\n",
