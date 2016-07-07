@@ -113,17 +113,17 @@ test_that("pgls works", {
   # d.pgls<- dSep(gPhy, FUN=caper::pgls, n=nrow(shorebird$data), cl=2, data=shorebird)
   # expect_is(d.pgls, "dSep")
 
-  cl<- parallel::makeCluster(2, type="FORK")
+  # cl<- parallel::makeCluster(2, type="FORK")
   # d.pgls<- dSep(g3, FUN=caper::pgls, n=nrow(shorebird$data), cl=cl, data=shorebird)
   # expect_is(d.pgls, "dSep")
-  d.pgls<- dSep(gPhy, FUN="pgls", n=nrow(shorebird$data), cl=cl, data=shorebird)
-  expect_is(d.pgls, "dSep")
-  parallel::stopCluster(cl)
+  # d.pgls<- dSep(gPhy, FUN="pgls", n=nrow(shorebird$data), cl=cl, data=shorebird)
+  # expect_is(d.pgls, "dSep")
+  # parallel::stopCluster(cl)
 
 
   ## Example 2
-  d.pgls<- dSep(m, FUN=caper::pgls, cl=4, orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML")
-  expect_is(d.pgls, "dSep")
+  # d.pgls<- dSep(m, FUN=caper::pgls, cl=4, orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML")
+  # expect_is(d.pgls, "dSep")
 })
 
 ## brm ----
@@ -167,12 +167,12 @@ test_that("MCMCglmm works", {
   # d.MCMCglmm<- dSep(g, FUN=MCMCglmm::MCMCglmm, formulaArg="fixed", n=nrow(d), cl=2, data=d, verbose=FALSE)
   # expect_is(d.MCMCglmm, "dSep")
 
-  cl<- parallel::makeCluster(2, type="FORK")
+  # cl<- parallel::makeCluster(2, type="FORK")
   # d.MCMCglmm<- dSep(g1, FUN=MCMCglmm::MCMCglmm, formulaArg="fixed", n=nrow(d), cl=cl, data=d, verbose=FALSE)
   # expect_is(d.MCMCglmm, "dSep")
-  d.MCMCglmm<- dSep(g, FUN=MCMCglmm::MCMCglmm, formulaArg="fixed", n=nrow(d), cl=cl, data=d, verbose=FALSE)
-  expect_is(d.MCMCglmm, "dSep")
-  parallel::stopCluster(cl)
+  # d.MCMCglmm<- dSep(g, FUN=MCMCglmm::MCMCglmm, formulaArg="fixed", n=nrow(d), cl=cl, data=d, verbose=FALSE)
+  # expect_is(d.MCMCglmm, "dSep")
+  # parallel::stopCluster(cl)
 })
 
 
@@ -186,7 +186,12 @@ D<- list()
 suppressMessages(D$lm<- dSep(g, FUN="lm", data=d))
 suppressMessages(D$glm<- dSep(g, FUN="glm", pathCoef=FALSE, data=d))
 suppressMessages(D$gls<- dSep(g1, FUN=nlme::gls, formulaArg="model", data=d))
-suppressMessages(D$pgls<- dSep(m, FUN=caper::pgls, cl=4, orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML"))
+suppressMessages(D$pgls<- dSep(m, FUN=caper::pgls, cl=parallel::detectCores(), orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML"))
+## TODO ERROR: The model does not contain posterior samples. brm
+# suppressMessages(D$brm0<- dSep(g1, FUN=brms::brm, cl=parallel::detectCores(), pathCoef=FALSE, data=d))
+# suppressMessages(D$brm<- dSep(m, FUN=brms::brm, cl=parallel::detectCores(), pathCoef=FALSE, data=rhino.dat))
+suppressMessages(D$MCMCglmm<- dSep(g1, FUN=MCMCglmm::MCMCglmm, formulaArg="fixed", n=nrow(d), cl=parallel::detectCores(), data=d, verbose=FALSE))
+
 sapply(D, function(x) class(x))
 
 test_that("print works", {
@@ -215,3 +220,9 @@ test_that("plot works", {
   lapply(D, function(x) ifelse(inherits(x, "dSep"), try(plot(x, plotCoef=TRUE, plotdSep=TRUE)), "ERROR"))
 })
 
+# Save models for test-LM_API.R
+# M<- lapply(D, function(x) x$model[[1]])
+# M$brm<- brms::brm(count ~ log_Age_c + log_Base4_c * Trt_c + (1|patient) + (1|visit) + (1|obs), data=brms::epilepsy, family = poisson(),
+#                   prior = c(set_prior("student_t(5,0,10)", class = "b"), set_prior("cauchy(0,2)", class = "sd")), cluster=parallel::detectCores())
+#
+# save(M, file="inst/extdata/sampleModels.RData")

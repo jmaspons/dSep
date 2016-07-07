@@ -23,7 +23,7 @@
 #'
 #' p.a<- pathCoef(g1, FUN="lm", nobs=nrow(d), data=d)
 #' plot(p.b<- pathCoef(list(m1=g1, m2=g2), FUN="lm", nobs=nrow(d), data=d))
-#' @import graph
+#' @importFrom graph edgeData edgeDataDefaults edgeNames
 #' @export
 pathCoef<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...) UseMethod("pathCoef")
 
@@ -52,7 +52,7 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
     formulas<- strsplit(edgName, "~")
 
     formulas<- lapply(formulas, function(z){
-      as.formula(paste(z[2], "~", z[1]), env=.GlobalEnv)
+      stats::as.formula(paste(z[2], "~", z[1]), env=.GlobalEnv)
     })
 
     return(formulas)
@@ -137,8 +137,8 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
 
 #' @rdname pathCoef
 #' @export
-summary.pathCoef<- function(x, ....){
-  out<- list(res=x$res, FUN=x$FUN, alpha=x$alpha)
+summary.pathCoef<- function(object, ...){
+  out<- list(res=object$res, FUN=object$FUN, alpha=object$alpha)
   class(out)<- "summary.pathCoef"
   out
 }

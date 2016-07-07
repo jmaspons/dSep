@@ -38,12 +38,13 @@ CICc <- function(C, q, n){
 #' @param orderResponse character vector with the order of precedence of the variables when choosing a response variable for the d-separation test.
 #' @return a \code{conditionalIndependences} object.
 #' @examples
-#' condIndep(g<- dag(~BV:season:interCV + FS:season, forceCheck=TRUE))
-#' @import graph
+#' g<- gRbase::dag(~BV:season:interCV + FS:season, forceCheck=TRUE)
+#' condIndep(g)
+#' @importFrom graph edges inEdges nodes
 #' @export
 condIndep<- function(x, orderResponse){
   if (!inherits(x, "graph")) stop("x must be an object inheriting from graph class.")
-  if (require(gRbase) & inherits(x, "graphNEL")){
+  if (requireNamespace("gRbase") & inherits(x, "graphNEL")){
     if (!gRbase::is.DAG(x)) stop("input must be a directed acyclical graph. See ?dag")
   }else{
     message("gRbase package not installed. No checks ensure that the graph is a directed acyclical graph (DAC).\n\tProceed under your own risk.")
@@ -93,7 +94,7 @@ condIndep<- function(x, orderResponse){
     }
 
     pred<- paste(sort(as.character(c(cI$dSep[-selResponse], cI$causal))), collapse=" + ")
-    mod<- as.formula(paste(cI$dSep[selResponse], "~", pred), env=.GlobalEnv)
+    mod<- stats::as.formula(paste(cI$dSep[selResponse], "~", pred), env=.GlobalEnv)
     indTest<- cI$dSep[,-selResponse]
     return (list(formula=mod, independentVar=indTest))
   })
@@ -103,6 +104,7 @@ condIndep<- function(x, orderResponse){
   return(res)
 }
 
+#' @importFrom graph edgeData edgeDataDefaults edgeNames graphNEL
 graph.conditionalIndependences<- function(x, ...){
   dSepPair<- lapply(x$conditionalIndependences, function(y) y$dSep)
   dSepPair<- do.call(rbind, dSepPair)
@@ -121,7 +123,7 @@ graph.conditionalIndependences<- function(x, ...){
       return(character())
     }
   })
-  g<- graphNEL(nodes=nod, edgeL=edg, edgemod="directed")
+  g<- graph::graphNEL(nodes=nod, edgeL=edg, edgemode="directed")
 
   pVal<- sapply(x$model, function(y) y$p.value)
 
@@ -195,23 +197,21 @@ graph.conditionalIndependences<- function(x, ...){
 #'   g4<- gRbase::dag(~Egg.Mass:M.Mass:Cl.size + Cl.size:F.Mass:M.Mass)
 #'   m1.pgls<- dSep(list(mPhy1=g3, mPhy2=g4), FUN=caper::pgls, n=nrow(d), cl=3, data=shorebird, lambda='ML')
 #'
-#'   if (require(gRbase)){
-#'     rhino.dat <- read.csv("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.csv")
-#'     rhino.tree <- ape::read.tree("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.tree")
-#'     com.dat<- caper::comparative.data(rhino.tree, rhino.dat, SP, vcv=TRUE, vcv.dim=3, warn.dropped=TRUE)
-#'     m<- list()
-#'     m$h1<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:DD)
-#'     m$h2<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:DD:LS)
-#'     m$h3<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:NL)
-#'     m$h4<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:BM:NL)
-#'     m$h5<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:BM:NL:DD)
-#'     m$h6<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:BM)
-#'     m$h7<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:BM:LS)
-#'     m$h8<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL)
-#'     m$h9<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:LS)
+#'   rhino.dat <- read.csv("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.csv")
+#'   rhino.tree <- read.tree("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.tree")
+#'   com.dat<- caper::comparative.data(rhino.tree, rhino.dat, SP, vcv=TRUE, vcv.dim=3, warn.dropped=TRUE)
+#'   m<- list()
+#'   m$h1<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:DD)
+#'   m$h2<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:DD:LS)
+#'   m$h3<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:NL)
+#'   m$h4<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:BM:NL)
+#'   m$h5<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:BM:NL:DD)
+#'   m$h6<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:BM)
+#'   m$h7<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:BM:LS)
+#'   m$h8<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL)
+#'   m$h9<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:LS)
 #'
-#'     m2.pgls<- dSep(m, FUN=pgls, cl=parallel::detectCores(), orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML")
-#'   }
+#'   m2.pgls<- dSep(m, FUN=pgls, cl=parallel::detectCores(), orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML")
 #' }
 #'
 #' if (require("brms"))
@@ -223,7 +223,7 @@ graph.conditionalIndependences<- function(x, ...){
 #' ##
 #' plot(m.glm)
 #' @export
-dSep<- function(x, FUN="lm", formulaArg="formula", n, cl, pathCoef=TRUE, ...) UseMethod("dSep")
+dSep<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl, pathCoef=TRUE, ...) UseMethod("dSep")
 
 #' @rdname dSep
 #' @export
@@ -243,8 +243,7 @@ dSep.pathCoef<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl
 
 # FUN="lm"; formulaArg="formula"; n=nrow(d); cl=1; args0<- list(data=d)
 #' @rdname dSep
-#' @import graph
-#' @importFrom caper pgls
+#' @importFrom graph numEdges numNodes
 #' @export
 dSep.list<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl, pathCoef=TRUE, ...){
   if (is.null(names(x))) names(x)<- seq_along(x)
@@ -313,7 +312,7 @@ dSep.list<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl, pa
   Cx<- lapply(pValCondInd, C)
   Cx.pval<- lapply(Cx, function(p){
     if (all(is.na(p))) return(NA)
-    1 - pchisq(p, 2 * length(p))
+    1 - stats::pchisq(p, 2 * length(p))
   })
 
   ## Try to extract sample size from the models if n parameter is missing
@@ -383,7 +382,7 @@ as.data.frame.conditionalIndependences<- function(x, ...){
 
 #' @export
 print.conditionalIndependences<- function(x, ...){
-  out<- dSep:::as.data.frame.conditionalIndependences(x)
+  out<- as.data.frame.conditionalIndependences(x)
   names(out)<- gsub("condIndp", "condIndp*", names(out))
   if (all(is.na(out$p.value))){
     out<- out[,!names(out) %in% "p.value"]
@@ -395,9 +394,9 @@ print.conditionalIndependences<- function(x, ...){
   invisible(x)
 }
 
-summary.list.conditionalIndependences<- function(x, ....){
-  condInd<- lapply(x, function(y){
-    as.data.frame.conditionalIndependences(y)
+summary.list.conditionalIndependences<- function(object, ...){
+  condInd<- lapply(object, function(x){
+    as.data.frame.conditionalIndependences(x)
   })
   condInd<- unique(do.call(rbind, condInd))
   rownames(condInd)<- NULL
@@ -409,12 +408,12 @@ summary.list.conditionalIndependences<- function(x, ....){
 
 #' @rdname dSep
 #' @export
-summary.dSep<- function(x, ....){
-  conditionalIndependences<- summary.list.conditionalIndependences(x$conditionalIndependences)
-  pathCoefficients<- summary.pathCoef(x$pathCoefficients)
+summary.dSep<- function(object, ...){
+  conditionalIndependences<- summary.list.conditionalIndependences(object$conditionalIndependences)
+  pathCoefficients<- summary.pathCoef(object$pathCoefficients)
 
-  out<- list(res=x$res, FUN=x$FUN, conditionalIndependences=conditionalIndependences, n=x$n)
-  if (!is.null(x$pathCoefficients)){
+  out<- list(res=object$res, FUN=object$FUN, conditionalIndependences=conditionalIndependences, n=object$n)
+  if (!is.null(object$pathCoefficients)){
     out<- c(out, list(pathCoefficients=pathCoefficients))
   }
 

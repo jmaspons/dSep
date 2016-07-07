@@ -5,6 +5,7 @@
 #' @name pValues
 #' @param x the result of a model from lm, glm, gls, pgls, MCMCglmm or brm functions
 #' @return A named vector with p-values for each predictor
+#' @importFrom stats coef
 #' @export
 pValues<- function(x) UseMethod("pValues")
 
@@ -16,7 +17,7 @@ pValues.default<- function(x) coef(summary(x))[,4]
 pValues.lm<- function(x) coef(summary(x))[,"Pr(>|t|)"]
 #' @rdname pValues
 #' @export
-pValues.pgls<- function(x) stats:::coef.default(caper::summary.pgls(x))[,"Pr(>|t|)"]
+pValues.pgls<- function(x) coef(caper::summary.pgls(x))[,"Pr(>|t|)"]
 #' @rdname pValues
 #' @export
 pValues.MCMCglmm<- function(x) MCMCglmm::summary.MCMCglmm(x)$solutions[,"pMCMC"]
@@ -26,8 +27,10 @@ pValues.gls<- function(x) coef(nlme:::summary.gls(x))[,"p-value"]
 #' @rdname pValues
 #' @export
 pValues.brmsfit<- function(x){
-  coefs<- brms::as.mcmc(x)
-  coefs<- brms::as.mcmc(lapply(coefs, function(y) y[,grep("^b_", colnames(y))]))
+  # Does the model contain posterior samples?
+  if (!inherits(x$fit, "stanfit") || !length(x$fit@sim)) return(NA_real_)
+
+  coefs<- brms::as.mcmc(x, pars="^b_")
 
   # lapply(coefs, colMeans) # post.mean
   # lapply(coefs, coda::HPDinterval) # "l-95% CI", "u-95% CI"
@@ -46,18 +49,30 @@ pValues.brmsfit<- function(x){
 
 ## scoef ----
 
-#' @importFrom caper coef.pgls
+#' @importFrom stats coef
 #' @export
 scoef<- function(object, ...) UseMethod("scoef")
+
 #' @export
 scoef.default<- function(object, ...) coef(object, ...)
 #' @export
+scoef.pgls<- function(object, ...) caper::coef.pgls(object, ...)
+#' @export
 scoef.MCMCglmm<- function(object, ...) MCMCglmm::posterior.mode(object$Sol)
 #' @export
-scoef.brmsfit<- function(object, ...) drop(t(brms::fixef(object, ...)))
+scoef.brmsfit<- function(object, ...){
+  # Does the model contain posterior samples?
+  if (!inherits(object$fit, "stanfit") || !length(object$fit@sim)) return(NA_real_)
+  drop(t(brms::fixef(object, ...)))
+}
 
 
-#' @importFrom caper nobs.pgls
+## nobs ----
+
+#' @importFrom stats nobs
+#' @export
+nobs.pgls<- function(object, ...) caper::nobs.pgls(object, ...)
+
 #' @export
 nobs.MCMCglmm<- function(object, ...) length(object$error.term)
 
