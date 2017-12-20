@@ -20,6 +20,12 @@ pValues.lm<- function(x) coef(summary(x))[,"Pr(>|t|)"]
 pValues.pgls<- function(x) coef(caper::summary.pgls(x))[,"Pr(>|t|)"]
 #' @rdname pValues
 #' @export
+pValues.phylolm<- function(x) coef(phylolm::summary.phylolm(x))[,"p.value"]
+#' @rdname pValues
+#' @export
+pValues.phyloglm<- function(x) coef(phylolm::summary.phyloglm(x))[,"p.value"]
+#' @rdname pValues
+#' @export
 pValues.MCMCglmm<- function(x) MCMCglmm::summary.MCMCglmm(x)$solutions[,"pMCMC"]
 #' @rdname pValues
 #' @export
@@ -54,7 +60,7 @@ pValues.brmsfit<- function(x){
 scoef<- function(object, ...) UseMethod("scoef")
 
 #' @export
-scoef.default<- function(object, ...) coef(object, ...)
+scoef.default<- function(object, ...) coef(object, ...) # phylolm, glm, lm, gls
 #' @export
 scoef.pgls<- function(object, ...) caper::coef.pgls(object, ...)
 #' @export
@@ -72,7 +78,10 @@ scoef.brmsfit<- function(object, ...){
 #' @importFrom stats nobs
 #' @export
 nobs.pgls<- function(object, ...) caper::nobs.pgls(object, ...)
-
+#' @export
+nobs.phylolm<- function(object, ...) phylolm::nobs.phylolm(object, ...)
+#' @export
+nobs.phyloglm<- function(object, ...) phylolm::nobs.phylolm(object, ...)
 #' @export
 nobs.MCMCglmm<- function(object, ...) length(object$error.term)
 

@@ -6,7 +6,7 @@ g2<- gRbase::dag(~a:c:d + b:d:a)
 g<- list(m1=g1, m2=g2)
 d<- data.frame(a=rnorm(100), b=rnorm(100), c=rnorm(100), d=rnorm(100))
 
-if (require(caper)){
+if (require(caper) | require(phylolm)){
   rhino.dat <- read.csv("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.csv")
   rhino.tree <- ape::read.tree("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.tree")
   com.dat<- caper::comparative.data(rhino.tree, rhino.dat, SP, vcv=TRUE, vcv.dim=3, warn.dropped=TRUE)
@@ -95,13 +95,12 @@ context("dSep-FUN=pgls")
 
 test_that("pgls works", {
   skip_if_not_installed("caper")
-  # library(caper)
-  data(shorebird, package="caper")
-  shorebird.data[,2:5]<- scale(log(shorebird.data[,2:5]))
-  shorebird<- caper::comparative.data(phy=shorebird.tree, data=shorebird.data, names.col=Species)
-  g3<- gRbase::dag(~Egg.Mass:M.Mass:F.Mass)
-  g4<- gRbase::dag(~Egg.Mass:M.Mass:Cl.size + Cl.size:F.Mass:M.Mass)
-  gPhy<- list(mPhy1=g3, mPhy2=g4)
+  # data(shorebird, package="caper")
+  # shorebird.data[,2:5]<- scale(log(shorebird.data[,2:5]))
+  # shorebird<- caper::comparative.data(phy=shorebird.tree, data=shorebird.data, names.col=Species)
+  # g3<- gRbase::dag(~Egg.Mass:M.Mass:F.Mass)
+  # g4<- gRbase::dag(~Egg.Mass:M.Mass:Cl.size + Cl.size:F.Mass:M.Mass)
+  # gPhy<- list(mPhy1=g3, mPhy2=g4)
 
   # d.pgls<- dSep(g3, FUN=caper::pgls, n=nrow(shorebird$data), data=shorebird)
   # expect_is(d.pgls, "dSep")
@@ -126,13 +125,48 @@ test_that("pgls works", {
   # expect_is(d.pgls, "dSep")
 })
 
+## phylolm ----
+
+context("dSep-FUN=phylolm")
+
+test_that("phylolm works", {
+  skip_if_not_installed("phylolm")
+  # data(shorebird, package="caper")
+  # shorebird.data[,2:5]<- scale(log(shorebird.data[,2:5]))
+  # shorebird<- caper::comparative.data(phy=shorebird.tree, data=shorebird.data, names.col=Species)
+  # g3<- gRbase::dag(~Egg.Mass:M.Mass:F.Mass)
+  # g4<- gRbase::dag(~Egg.Mass:M.Mass:Cl.size + Cl.size:F.Mass:M.Mass)
+  # gPhy<- list(mPhy1=g3, mPhy2=g4)
+
+  # d.phylolm<- dSep(g3, FUN=phylolm:phylolm, n=nrow(shorebird$data), data=shorebird)
+  # expect_is(d.phylolm, "dSep")
+  # d.phylolm<- dSep(gPhy, FUN=phylolm:phylolm, n=nrow(shorebird$data), data=shorebird)
+  # expect_is(d.phylolm, "dSep")
+
+  # d.phylolm<- dSep(g3, FUN=phylolm:phylolm, n=nrow(shorebird$data), cl=2, data=shorebird)
+  # expect_is(d.phylolm, "dSep")
+  # d.phylolm<- dSep(gPhy, FUN=phylolm:phylolm, n=nrow(shorebird$data), cl=2, data=shorebird)
+  # expect_is(d.phylolm, "dSep")
+
+  # cl<- parallel::makeCluster(2, type="FORK")
+  # d.phylolm<- dSep(g3, FUN=phylolm:phylolm, n=nrow(shorebird$data), cl=cl, data=shorebird)
+  # expect_is(d.phylolm, "dSep")
+  # d.phylolm<- dSep(gPhy, FUN="pgls", n=nrow(shorebird$data), cl=cl, data=shorebird)
+  # expect_is(d.phylolm, "dSep")
+  # parallel::stopCluster(cl)
+
+
+  ## Example 2
+  d.phylolm<- dSep(m, FUN=phylolm::phylolm, cl=4, orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat$data, phy=com.dat$phy)
+  # expect_is(d.phylolm, "dSep")
+})
 ## brm ----
 
 context("dSep-FUN=brm")
 
 test_that("brm works", {
   skip_if_not_installed("brms")
-  library(brms)
+  # library(brms)
   # d.brmfit<- dSep(g1, FUN=brms::brm, n=nrow(d), pathCoef=FALSE, data=d)
   # expect_is(d.brmfit, "dSep")
   # d.brmfit<- dSep(g, FUN=brms::brm, n=nrow(d), pathCoef=FALSE,  data=d)
@@ -187,6 +221,7 @@ suppressMessages(D$lm<- dSep(g, FUN="lm", data=d))
 suppressMessages(D$glm<- dSep(g, FUN="glm", pathCoef=FALSE, data=d))
 suppressMessages(D$gls<- dSep(g1, FUN=nlme::gls, formulaArg="model", data=d))
 suppressMessages(D$pgls<- dSep(m, FUN=caper::pgls, cl=parallel::detectCores(), orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML"))
+suppressMessages(D$phylolm<- dSep(m, FUN=phylolm::phylolm, cl=parallel::detectCores(), orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat$data, phy=com.dat$phy))
 ## TODO ERROR: The model does not contain posterior samples. brm
 # suppressMessages(D$brm0<- dSep(g1, FUN=brms::brm, cl=parallel::detectCores(), pathCoef=FALSE, data=d))
 # suppressMessages(D$brm<- dSep(m, FUN=brms::brm, cl=parallel::detectCores(), pathCoef=FALSE, data=rhino.dat))

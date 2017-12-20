@@ -1,24 +1,24 @@
 Package: dSep
 Type: Package
 Title: Path analysis using d-separation
-Version: 0.2.1
+Version: 0.2.3
 Authors@R: person("Joan", "Maspons", email = "j.maspons@creaf.uab.cat", role = c("aut", "cre"))
-Description: Generic implementation of path analysis using d-separation. It allows to use lm, glm, gls, pgls, MCMCglmm and brm models to test the conditional independence statements.
+Description:
+    Generic implementation of path analysis using d-separation. It allows to use lm, glm, gls, pgls, phylolm, phyloglm, MCMCglmm and brm models to test the conditional independence statements.
   IMPORTANT- you need to install 'graph' package:
     source("https://bioconductor.org/biocLite.R")
     biocLite("graph")
-    biocLite(c("Rgraphviz", "gRbase")) # Recommended
+    biocLite(c("Rgraphviz", "gRbase")) # Recommended.
 License: GPL-3
 LazyData: TRUE
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
 Imports: graph
 Suggests: Rgraphviz,
     gRbase,
     brms,
     caper,
+    phylolm,
     MCMCglmm,
     nlme,
     testthat
 Additional_repositories: https://bioconductor.org
-
-
