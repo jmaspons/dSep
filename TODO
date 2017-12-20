@@ -1,0 +1,5 @@
+TODO
+====
++ Add a parameter to dSep to append arbitrary terms to the formula (e.g. random variables)
++ Use igraph or diagrammeR instead of graph package to avoid bioconductor repositories
++ Allow categoric predictors (handle coef acoordingly)

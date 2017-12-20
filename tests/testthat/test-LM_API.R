@@ -6,8 +6,9 @@
 
 
 context("lm, glm, gls, pgls, MCMCglmm and brm models")
-
-load(system.file("extdata/sampleModels.RData", package="dSep"))
+# load(system.file("extdata/sampleModels.RData", package="dSep"))
+## No need to increase the package size for a test. File in .Rbuildignore
+load("../../inst/extdata/sampleModels.RData")
 sapply(M, function(x) class(x))
 
 test_that("models have the right classes",{
