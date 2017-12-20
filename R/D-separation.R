@@ -308,11 +308,17 @@ dSep.list<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl, pa
 
 
   ## Stats
-  Cx<- lapply(pValCondInd, C)
-  Cx.pval<- lapply(Cx, function(p){
-    if (all(is.na(p))) return(NA)
-    1 - stats::pchisq(p, 2 * length(p))
+  Cx.stats<- lapply(pValCondInd, function(p){
+    Cx<- C(p)
+
+    if (is.na(Cx)) return(list(C=NA, p.value=NA))
+
+    Cx.pval<- 1 - stats::pchisq(Cx, 2 * length(p))
+    return(list(C=Cx, p.value=Cx.pval))
   })
+
+  Cx<- lapply(Cx.stats, function(x) x$C)
+  Cx.pval<- lapply(Cx.stats, function(x) x$p.value)
 
   ## Try to extract sample size from the models if n parameter is missing
   if (missing(n)){
@@ -320,7 +326,7 @@ dSep.list<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl, pa
     n<- ifelse(is.na(selEg), NA, nobs(m[[selEg]]))
   }
 
-  CICc.x<- lapply(seq_along(Cx), function(i, Cx, q, n) CICc(C=Cx[[i]], q=q[[i]], n=n), C=Cx, q=q, n=n)
+  CICc.x<- lapply(seq_along(Cx), function(i, Cx, q, n) CICc(C=Cx[[i]], q=q[i], n=n), C=Cx, q=q, n=n)
 
   res<- data.frame(q=q, C=as.numeric(Cx), p.value=as.numeric(Cx.pval), CICc=as.numeric(CICc.x), row.names=names(x))
   res<- res[order(res$CICc),]
