@@ -1,8 +1,5 @@
 ## Plots ----
 
-#' @export
-plot<- graph::plot
-
 #' @rdname dSep
 #'
 #' @param x a dSep object.
@@ -14,6 +11,7 @@ plot<- graph::plot
 #' @param alpha significance level.
 #' @export
 #' @S3method plot dSep
+#' @importFrom graphics plot
 plot.dSep<- function(x, y, plotCoef=TRUE, plotdSep=FALSE, legend=TRUE, lty=c(signif=1, nonSignif=2), color=c(causal="black", dsep="red"), alpha=0.05, ...){
   if (!requireNamespace("Rgraphviz")){
     stop("You need to install Rgraphviz to plot the results:\n",
@@ -48,7 +46,7 @@ plot.dSep<- function(x, y, plotCoef=TRUE, plotdSep=FALSE, legend=TRUE, lty=c(sig
   out<- lapply(1:nG, function(i){
     edgeAttributes<- edgeAttrs(g[[i]], alpha=alpha, lty=lty, color=color)
     title<- paste0(modelName[i], "\np-value=", round(x$res$p.value[i], 3), "\tCICc=", round(x$res$CICc[i], 3))
-    plot(x=g[[i]], main=title, edgeAttrs=edgeAttributes, ...)
+    graph::plot(x=g[[i]], main=title, edgeAttrs=edgeAttributes, ...)
   })
   names(out)<- names(g)
 
@@ -80,6 +78,7 @@ plot.dSep<- function(x, y, plotCoef=TRUE, plotdSep=FALSE, legend=TRUE, lty=c(sig
 #' @param alpha significance level.
 #' @export
 #' @S3method plot pathCoef
+#' @importFrom graphics plot
 plot.pathCoef<- function(x, y, plotCoef=TRUE, legend=TRUE, lty=c(signif=1, nonSignif=2), alpha=0.05, ...){
   if (!requireNamespace("Rgraphviz")){
     stop("You need to install Rgraphviz to plot the results:\n",
@@ -97,7 +96,7 @@ plot.pathCoef<- function(x, y, plotCoef=TRUE, legend=TRUE, lty=c(signif=1, nonSi
   out<- lapply(1:nG, function(i){
     edgeAttributes<- edgeAttrs(g[[i]], alpha=alpha, lty=lty)
     if (!plotCoef) edgeAttributes$label<- NULL
-    plot(x=g[[i]], main=modelName[i], edgeAttrs=edgeAttributes, ...) # TODO: Rgraphviz::plot?
+    graph::plot(x=g[[i]], main=modelName[i], edgeAttrs=edgeAttributes, ...) # TODO: Rgraphviz::plot?
   })
   names(out)<- names(g)
 
@@ -114,6 +113,7 @@ plot.pathCoef<- function(x, y, plotCoef=TRUE, legend=TRUE, lty=c(signif=1, nonSi
 ## Helpers ----
 ## TODO: think API
 # getDefaultAttrs()
+
 #' Edge attributes for ploting dSep and pathCoef classes
 #'
 #' @param g a \linkS4class{graph}.
@@ -121,10 +121,9 @@ plot.pathCoef<- function(x, y, plotCoef=TRUE, legend=TRUE, lty=c(signif=1, nonSi
 #' @param lty a vector of 2 elements with the line type of significant and non significant paths.
 #' @param color a vector of 2 elements with the color of the causal edges and the color of the d-separation edges.
 #' @param ... other valid edge attributes.
-#' @importFrom graph edgeNames edgeWeights
 edgeAttrs<- function(g, alpha=0.05, lty=1:2, color=1:2, ...){
   eAttrs<- list()
-  attrName<- names(edgeDataDefaults(g))
+  attrName<- names(graph::edgeDataDefaults(g))
 
   ## Edge type: significant p-value
   if ("p.value" %in% attrName){
@@ -183,7 +182,6 @@ edgeAttrs<- function(g, alpha=0.05, lty=1:2, color=1:2, ...){
 #' @param y \linkS4class{graph}
 #' @details If the same edge attribute is present in both, the value from the second one is omited.
 #' TODO: merge nodeData and graphData
-#' @importFrom graph edgeData edgeDataDefaults edgeNames join
 #' @export
 merge.graph<- function(x, y, ...){
   ## Topological union

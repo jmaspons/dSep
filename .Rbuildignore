@@ -1,2 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^inst/extdata/sampleModels.RData
+^\.travis\.yml$
+^appveyor\.yml$
+^revdep$

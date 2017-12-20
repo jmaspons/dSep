@@ -23,7 +23,6 @@
 #'
 #' p.a<- pathCoef(g1, FUN="lm", nobs=nrow(d), data=d)
 #' plot(p.b<- pathCoef(list(m1=g1, m2=g2), FUN="lm", nobs=nrow(d), data=d))
-#' @importFrom graph edgeData edgeDataDefaults edgeNames
 #' @export
 pathCoef<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...) UseMethod("pathCoef")
 
@@ -124,7 +123,7 @@ pathCoef.list<- function(x, FUN="lm", formulaArg="formula", cl, alpha=0.05, ...)
       graph::edgeData(x[[i]], from=from, to=to, attr="coefficients")<- as.numeric(tmpVars$coefficients[j])
       graph::edgeData(x[[i]], from=from, to=to, attr="p.value")<- as.numeric(tmpVars$p.value[j])
     }
-    # edgeData(x[[i]]); edgeData(x[[i]], attr="p.value")
+    # graph::edgeData(x[[i]]); graph::edgeData(x[[i]], attr="p.value")
   }
 
   out<- list(graph=x, res=varsM, models=m, FUN=FUN, args=args0, formulaArg=formulaArg, alpha=alpha)

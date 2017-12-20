@@ -40,7 +40,6 @@ CICc <- function(C, q, n){
 #' @examples
 #' g<- gRbase::dag(~BV:season:interCV + FS:season, forceCheck=TRUE)
 #' condIndep(g)
-#' @importFrom graph edges inEdges nodes
 #' @export
 condIndep<- function(x, orderResponse){
   if (!inherits(x, "graph")) stop("x must be an object inheriting from graph class.")
@@ -104,7 +103,7 @@ condIndep<- function(x, orderResponse){
   return(res)
 }
 
-#' @importFrom graph edgeData edgeDataDefaults edgeNames graphNEL
+
 graph.conditionalIndependences<- function(x, ...){
   dSepPair<- lapply(x$conditionalIndependences, function(y) y$dSep)
   dSepPair<- do.call(rbind, dSepPair)
@@ -145,7 +144,7 @@ graph.conditionalIndependences<- function(x, ...){
       # graph::edgeData(g, from=from, to=to, attr="coefficients")<- as.numeric(dSepPair$coefficients[j])
       graph::edgeData(g, from=from, to=to, attr="p.value")<- as.numeric(dSepPair$p.value[j])
     }
-    # edgeData(g); edgeData(g, attr="p.value")
+    # graph::edgeData(g); graph::edgeData(g, attr="p.value")
   }
 
 
@@ -173,7 +172,7 @@ graph.conditionalIndependences<- function(x, ...){
 #' @param ... parameters passed to FUN. Parameters must be named following the FUN arguments (e.g. data=data.frame()).
 #' @return a dSep object.
 #' @author Joan Maspons <\email{j.maspons@@creaf.uab.cat}>
-#' @references Gonzalez-Voyer, Alejandro, and Achaz Von Hardenberg. 2014. “An Introduction to Phylogenetic Path Analysis.” In Modern Phylogenetic Comparative Methods and Their Application in Evolutionary Biology, edited by László Zsolt Garamszegi, 29. Berlin, Heidelberg: Springer Berlin Heidelberg.
+#' @references Gonzalez-Voyer, Alejandro, and Achaz Von Hardenberg. 2014. "An Introduction to Phylogenetic Path Analysis." In Modern Phylogenetic Comparative Methods and Their Application in Evolutionary Biology, edited by Laszlo Zsolt Garamszegi, 29. Berlin, Heidelberg: Springer Berlin Heidelberg.
 #' \url{http://www.mpcm-evolution.org/practice/online-practical-material-chapter-8/chapter-8-2-step-step-guide-phylogenetic-path-analysis-using-d-sep-method-rhinograds-example}
 #' @examples
 #' ## Dummy data
@@ -192,10 +191,10 @@ graph.conditionalIndependences<- function(x, ...){
 #' if (require(caper)){
 #'   data(shorebird, package="caper")
 #'   shorebird.data[,2:5]<- scale(log(shorebird.data[,2:5]))
-#'   shorebird<- caper::comparative.data(shorebird.tree, shorebird.data, 'Species')
+#'   shorebird<- comparative.data(shorebird.tree, shorebird.data, 'Species')
 #'   g3<- gRbase::dag(~Egg.Mass:M.Mass:F.Mass)
 #'   g4<- gRbase::dag(~Egg.Mass:M.Mass:Cl.size + Cl.size:F.Mass:M.Mass)
-#'   m1.pgls<- dSep(list(mPhy1=g3, mPhy2=g4), FUN=caper::pgls, n=nrow(d), cl=3, data=shorebird, lambda='ML')
+#'   m1.pgls<- dSep(list(mPhy1=g3, mPhy2=g4), FUN=caper::pgls, n=nrow(d), cl=2, data=shorebird, lambda='ML')
 #'
 #'   rhino.dat <- read.csv("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.csv")
 #'   rhino.tree <- read.tree("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.tree")
@@ -211,14 +210,14 @@ graph.conditionalIndependences<- function(x, ...){
 #'   m$h8<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL)
 #'   m$h9<- gRbase::dag(~LS:BM + NL:BM:RS + DD:NL + RS:LS)
 #'
-#'   m2.pgls<- dSep(m, FUN=pgls, cl=parallel::detectCores(), orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML")
+#'   m2.pgls<- dSep(m, FUN=pgls, cl=2, orderResponse=c("BM", "RS", "LS", "NL", "DD"), data=com.dat, lambda="ML")
 #' }
 #'
 #' if (require("brms"))
-#'   m.brmfit<- dSep(g1, FUN=brm, n=nrow(d), cl=parallel::detectCores(), pathCoef=FALSE, data=d)
+#'   m.brmfit<- dSep(g1, FUN=brm, n=nrow(d), cl=2, pathCoef=FALSE, data=d)
 #'
 #' if (require("MCMCglmm"))
-#'   m.MCMCglmm<- dSep(g1, FUN=MCMCglmm, formulaArg="fixed", n=nrow(d), cl=parallel::detectCores(), data=d, verbose=FALSE)
+#'   m.MCMCglmm<- dSep(g1, FUN=MCMCglmm, formulaArg="fixed", n=nrow(d), cl=2, data=d, verbose=FALSE)
 #'
 #' ##
 #' plot(m.glm)
@@ -243,7 +242,6 @@ dSep.pathCoef<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl
 
 # FUN="lm"; formulaArg="formula"; n=nrow(d); cl=1; args0<- list(data=d)
 #' @rdname dSep
-#' @importFrom graph numEdges numNodes
 #' @export
 dSep.list<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl, pathCoef=TRUE, ...){
   if (is.null(names(x))) names(x)<- seq_along(x)
@@ -297,6 +295,7 @@ dSep.list<- function(x, FUN="lm", orderResponse, formulaArg="formula", n, cl, pa
     sapply(y$model, function(z){ # Conditional independences loop
       sel<- which(as.character(formulas) %in% as.character(list(z$formula)))
       if (all(is.na(pVal))) return(NA)
+      ## TODO: use grep to catch categorical predictors. Use min p-val of all levels?
       pVal[[sel]][z$independentVar]
     })
   })
