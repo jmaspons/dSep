@@ -1,6 +1,11 @@
+# dSep 0.2.4
+
+* add LM-methods for lme models
+
 # dSep 0.2.3
 
 * Fix error when calculating C p-value
+* Implement phylolm models
 
 # dSep 0.2.0
 

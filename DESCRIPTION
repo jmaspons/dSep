@@ -1,7 +1,7 @@
 Package: dSep
 Type: Package
 Title: Path analysis using d-separation
-Version: 0.2.3
+Version: 0.2.4
 Authors@R: person("Joan", "Maspons", email = "j.maspons@creaf.uab.cat", role = c("aut", "cre"))
 Description:
     Generic implementation of path analysis using d-separation. It allows to use lm, glm, gls, pgls, phylolm, phyloglm, MCMCglmm and brm models to test the conditional independence statements.

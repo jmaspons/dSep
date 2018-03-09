@@ -52,6 +52,10 @@ pValues.brmsfit<- function(x){
 
   return(colMeans(res))
 }
+#' @rdname pValues
+#' @export
+pValues.lme <- function(x) summary(x)$tTable[,"p-value"]
+
 
 ## scoef ----
 
@@ -71,6 +75,8 @@ scoef.brmsfit<- function(object, ...){
   if (!inherits(object$fit, "stanfit") || !length(object$fit@sim)) return(NA_real_)
   drop(t(brms::fixef(object, ...)))
 }
+#' @export
+scoef.lme <- function(object, ...) object$coefficients$fixed
 
 
 ## nobs ----
@@ -84,4 +90,5 @@ nobs.phylolm<- function(object, ...) phylolm::nobs.phylolm(object, ...)
 nobs.phyloglm<- function(object, ...) phylolm::nobs.phylolm(object, ...)
 #' @export
 nobs.MCMCglmm<- function(object, ...) length(object$error.term)
-
+#' @export
+nobs.lme<- function(object, ...) nlme:::nobs.lme(object, ...)
