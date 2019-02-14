@@ -73,7 +73,7 @@ scoef.MCMCglmm<- function(object, ...) MCMCglmm::posterior.mode(object$Sol)
 scoef.brmsfit<- function(object, ...){
   # Does the model contain posterior samples?
   if (!inherits(object$fit, "stanfit") || !length(object$fit@sim)) return(NA_real_)
-  drop(t(brms::fixef(object, ...)))
+  drop(t(brms::fixef(object, ...))["Estimate",])
 }
 #' @export
 scoef.lme <- function(object, ...) object$coefficients$fixed

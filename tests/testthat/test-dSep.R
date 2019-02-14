@@ -257,7 +257,7 @@ test_that("plot works", {
 
 # Save models for test-LM_API.R
 # M<- lapply(D, function(x) x$model[[1]])
-# M$brm<- brms::brm(count ~ log_Age_c + log_Base4_c * Trt_c + (1|patient) + (1|visit) + (1|obs), data=brms::epilepsy, family = poisson(),
-#                   prior = c(set_prior("student_t(5,0,10)", class = "b"), set_prior("cauchy(0,2)", class = "sd")), cluster=parallel::detectCores())
-#
+# M$brm<- brms::brm(count ~ log_Age_c + log_Base4_c * Trt_c + (1|patient) + (1|visit) + (1|obs), data=brms::epilepsy, family=poisson(),
+#                   prior=c(set_prior("student_t(5,0,10)", class="b"), set_prior("cauchy(0,2)", class="sd")), cores=parallel::detectCores())
+
 # save(M, file="inst/extdata/sampleModels.RData")
