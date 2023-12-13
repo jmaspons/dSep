@@ -10,4 +10,4 @@
 #' \url{http://www.mpcm-evolution.org/practice/online-practical-material-chapter-8/chapter-8-2-step-step-guide-phylogenetic-path-analysis-using-d-sep-method-rhinograds-example}
 #'
 #' @docType package
-NULL
+"_PACKAGE"

@@ -1,24 +1,36 @@
-Package: dSep
 Type: Package
+Package: dSep
 Title: Path analysis using d-separation
-Version: 0.2.4
-Authors@R: person("Joan", "Maspons", email = "j.maspons@creaf.uab.cat", role = c("aut", "cre"))
-Description:
-    Generic implementation of path analysis using d-separation. It allows to use lm, glm, gls, pgls, phylolm, phyloglm, MCMCglmm and brm models to test the conditional independence statements.
-  IMPORTANT- you need to install 'graph' package:
-    source("https://bioconductor.org/biocLite.R")
-    biocLite("graph")
-    biocLite(c("Rgraphviz", "gRbase")) # Recommended.
+Version: 0.2.4.1
+Authors@R: 
+    person("Joan", "Maspons", , "j.maspons@creaf.uab.cat", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-2286-8727"))
+Maintainer: Joan Maspons <joanmaspons@gmail.com>
+Description:Generic implementation of path analysis using d-separation.
+    It allows to use lm, glm, gls, pgls, phylolm, phyloglm, MCMCglmm and
+    brm models to test the conditional independence statements.
+    IMPORTANT- you need to install 'graph' package: if
+    (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager") BiocManager::install("graph")
+    BiocManager::install(c("Rgraphviz", "gRbase")) # Recommended ## FOR
+    OLDER R VERSIONS (< 3.5) source("https://bioconductor.org/biocLite.R")
+    biocLite("graph") biocLite(c("Rgraphviz", "gRbase")) # Recommended.
 License: GPL-3
-LazyData: TRUE
-RoxygenNote: 6.0.1
-Imports: graph
-Suggests: Rgraphviz,
-    gRbase,
+URL: https://jmaspons.github.io/dSep/, https://github.com/jmaspons/dSep
+BugReports: https://github.com/jmaspons/dSep/issues
+Imports: 
+    graph
+Suggests: 
     brms,
     caper,
-    phylolm,
+    gRbase,
     MCMCglmm,
     nlme,
+    phylolm,
+    Rgraphviz,
     testthat
 Additional_repositories: https://bioconductor.org
+biocViews:
+Encoding: UTF-8
+LazyData: TRUE
+RoxygenNote: 7.1.1
