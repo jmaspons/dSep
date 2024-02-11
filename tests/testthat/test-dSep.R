@@ -7,8 +7,8 @@ g<- list(m1=g1, m2=g2)
 d<- data.frame(a=rnorm(100), b=rnorm(100), c=rnorm(100), d=rnorm(100))
 
 if (require(caper) | require(phylolm)){
-  rhino.dat <- read.csv("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.csv")
-  rhino.tree <- ape::read.tree("http://mpcm-evolution.org/OPM/Chapter8_OPM/download/rhino.tree")
+  rhino.dat <- read.csv("http://mpcm-evolution.com/OPM/Chapter8_OPM/download/rhino.csv")
+  rhino.tree <- ape::read.tree("http://mpcm-evolution.com/OPM/Chapter8_OPM/download/rhino.tree")
   com.dat<- caper::comparative.data(rhino.tree, rhino.dat, SP, vcv=TRUE, vcv.dim=3, warn.dropped=TRUE)
   m<- list()
   m$h1<- gRbase::dag(~LS:BM + NL:BM + DD:NL + RS:DD)
