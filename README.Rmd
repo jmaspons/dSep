@@ -1,0 +1,43 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# dSep
+
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+<!-- badges: end -->
+
+Generic implementation of path analysis using d-separation. It allows to use lm, glm, gls, pgls, phylolm, phyloglm,
+MCMCglmm and brm models to test the conditional independence statements.
+
+    
+## Pre-requisites
+
+``` r
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install("graph")
+BiocManager::install(c("Rgraphviz", "gRbase")) # Recommended
+```
+
+## Installation
+
+You can install the development version of dSep like so:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("jmaspons/dSep")
+```
