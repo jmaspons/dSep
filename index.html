@@ -76,16 +76,31 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9">
-Generic implementation of path analysis using d-separation.
-    It allows to use lm, glm, gls, pgls, phylolm, phyloglm, MCMCglmm and
-    brm models to test the conditional independence statements.
-    IMPORTANT- you need to install 'graph' package: if
-    (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager") BiocManager::install("graph")
-    BiocManager::install(c("Rgraphviz", "gRbase")) # Recommended ## FOR
-    OLDER R VERSIONS (&lt; 3.5) source("https://bioconductor.org/biocLite.R")
-    biocLite("graph") biocLite(c("Rgraphviz", "gRbase")) # Recommended.
+  <main id="main" class="col-md-9"><div class="section level1">
+<div class="page-header"><h1 id="dsep">dSep<a class="anchor" aria-label="anchor" href="#dsep"></a>
+</h1></div>
+<!-- badges: start -->
+
+<p>Generic implementation of path analysis using d-separation. It allows to use lm, glm, gls, pgls, phylolm, phyloglm, MCMCglmm and brm models to test the conditional independence statements.</p>
+<div class="section level2">
+<h2 id="pre-requisites">Pre-requisites<a class="anchor" aria-label="anchor" href="#pre-requisites"></a>
+</h2>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="st">"graph"</span><span class="op">)</span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Rgraphviz"</span>, <span class="st">"gRbase"</span><span class="op">)</span><span class="op">)</span> <span class="co"># Recommended</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>You can install the development version of dSep like so:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"jmaspons/dSep"</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
@@ -116,7 +131,12 @@ Generic implementation of path analysis using d-separation.
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
+</ul>
+</div>
 
   </aside>
 </div>
